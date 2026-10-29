@@ -1,0 +1,204 @@
+.titlebar {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(280px, 520px) minmax(180px, 1fr);
+  align-items: center;
+  gap: var(--ug-space-4);
+  height: var(--ug-titlebar-h);
+  padding: 0 var(--ug-space-5) 0 var(--ug-space-4);
+  border-bottom: 1px solid var(--ug-border-subtle);
+  background:
+    linear-gradient(180deg, rgba(28, 21, 44, 0.95), rgba(10, 7, 15, 0.98));
+  -webkit-app-region: drag;
+  z-index: 20;
+}
+
+.titlebar__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.titlebar__brand .titlebar__icon-btn {
+  -webkit-app-region: no-drag;
+}
+
+.titlebar__brand-rule {
+  display: block;
+  width: 1px;
+  height: 18px;
+  margin: 0 2px;
+  background: var(--ug-border);
+  flex-shrink: 0;
+}
+
+.titlebar__crest {
+  display: block;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  object-fit: contain;
+  background: transparent;
+  border: 0;
+  border-radius: var(--ug-radius-sm);
+  box-shadow: none;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.titlebar__brand-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.titlebar__name {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35em;
+  font-family: var(--ug-font-brand);
+  font-size: 17px;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.titlebar__name-umbrix {
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  background: linear-gradient(
+    180deg,
+    #e2c07a 0%,
+    #c4893f 45%,
+    #9a6b2e 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.titlebar__name-groove {
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #efe8f8;
+}
+
+.titlebar__search {
+  position: relative;
+  -webkit-app-region: no-drag;
+}
+
+.titlebar__search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ug-text-muted);
+  pointer-events: none;
+}
+
+.titlebar__search input {
+  width: 100%;
+  height: 36px;
+  padding: 0 16px 0 40px;
+  border-radius: var(--ug-radius-pill);
+  border: 1px solid var(--ug-border);
+  background: rgba(7, 5, 12, 0.85);
+  color: var(--ug-text);
+  box-shadow: inset 0 0 0 1px rgba(201, 164, 92, 0.05);
+}
+
+.titlebar__search input::placeholder {
+  color: var(--ug-text-faint);
+}
+
+.titlebar__search input:disabled {
+  opacity: 0.85;
+  cursor: not-allowed;
+}
+
+.titlebar__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  -webkit-app-region: no-drag;
+}
+
+.titlebar__actions-rule {
+  display: block;
+  width: 1px;
+  height: 18px;
+  margin: 0 6px;
+  background: var(--ug-border);
+  flex-shrink: 0;
+}
+
+.titlebar__icon-btn {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--ug-radius-sm);
+  color: var(--ug-text-soft);
+  transition:
+    color var(--ug-duration) var(--ug-ease),
+    background var(--ug-duration) var(--ug-ease);
+}
+
+.titlebar__icon-btn:hover:not(:disabled) {
+  color: var(--ug-gold-bright);
+  background: rgba(201, 164, 92, 0.1);
+}
+
+.titlebar__icon-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.titlebar__icon-btn[aria-pressed='true'] {
+  color: var(--ug-amethyst-bright);
+  background: rgba(123, 77, 184, 0.2);
+}
+
+.titlebar__window {
+  display: flex;
+  align-items: center;
+  margin-left: 8px;
+  border-left: 1px solid var(--ug-border-subtle);
+  padding-left: 8px;
+}
+
+.titlebar__win-btn {
+  display: grid;
+  place-items: center;
+  justify-items: center;
+  align-content: center;
+  width: 38px;
+  height: 30px;
+  color: var(--ug-text-muted);
+  font-size: 12px;
+  border-radius: var(--ug-radius-sm);
+  line-height: 0;
+}
+
+.titlebar__win-btn .ug-icon {
+  display: grid;
+  place-items: center;
+  line-height: 0;
+}
+
+.titlebar__win-btn--minimize .ug-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.titlebar__win-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ug-text);
+}
+
+.titlebar__win-btn--close:hover {
+  background: #8b1e2d;
+  color: white;
+}

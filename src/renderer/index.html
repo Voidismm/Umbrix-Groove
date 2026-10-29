@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Umbrix Groove</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <!-- unsafe-eval: Butterchurn/Milkdrop compiles preset equations via new Function. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: umbrix:; media-src 'self' umbrix:; font-src 'self' data:"
+    />
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

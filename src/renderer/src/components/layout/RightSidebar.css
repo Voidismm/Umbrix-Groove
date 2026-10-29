@@ -1,0 +1,312 @@
+.right-sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  padding: var(--ug-space-4);
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(123, 77, 184, 0.16), transparent 50%),
+    linear-gradient(180deg, #14101f, #0b0812);
+  overflow: hidden;
+  transition: box-shadow 220ms var(--ug-ease);
+}
+
+.right-sidebar.is-lit {
+  box-shadow:
+    inset 0 0 0 1px rgba(201, 164, 92, 0.45),
+    inset 0 0 40px rgba(123, 77, 184, 0.22);
+}
+
+.right-sidebar.is-lit .right-sidebar__meta h2 {
+  color: var(--ug-gold-bright);
+}
+
+.right-sidebar__art {
+  aspect-ratio: 1;
+  margin-bottom: var(--ug-space-4);
+  padding: 6px;
+  background: rgba(7, 5, 12, 0.55);
+}
+
+.right-sidebar__art-inner {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  border-radius: var(--ug-radius-md);
+  color: var(--ug-gold-bright);
+  background:
+    radial-gradient(circle at 40% 30%, rgba(165, 109, 232, 0.35), transparent 45%),
+    radial-gradient(circle at 70% 80%, rgba(201, 164, 92, 0.2), transparent 40%),
+    linear-gradient(160deg, #24183a, #0d0a14);
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.45);
+}
+
+.right-sidebar__art-inner svg {
+  width: 64px;
+  height: 64px;
+  opacity: 0.85;
+  filter: none;
+}
+
+.right-sidebar__art-inner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+.right-sidebar__meta {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: var(--ug-space-3);
+}
+
+.right-sidebar__meta h2 {
+  margin: 0 0 4px;
+  font-family: var(--ug-font-display);
+  font-size: 1.05rem;
+  letter-spacing: 0.03em;
+}
+
+.right-sidebar__meta p {
+  margin: 0;
+  color: var(--ug-text-muted);
+}
+
+.right-sidebar__icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--ug-radius-sm);
+  color: var(--ug-text-soft);
+  border: 1px solid var(--ug-border-subtle);
+}
+
+.right-sidebar__icon:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.right-sidebar__icon.is-liked {
+  color: #c45b6e;
+}
+
+.right-sidebar__art-fallback {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  color: var(--ug-gold-bright);
+}
+
+.right-sidebar__art-fallback span {
+  font-family: var(--ug-font-display);
+  font-size: 2.4rem;
+  line-height: 1;
+  opacity: 0.9;
+}
+
+.right-sidebar__link {
+  color: inherit;
+  text-align: left;
+}
+
+.right-sidebar__link:hover {
+  color: var(--ug-gold-bright);
+}
+
+.right-sidebar__link strong {
+  color: inherit;
+}
+
+.right-sidebar__tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  margin-bottom: var(--ug-space-3);
+  padding: 4px;
+  border: 1px solid var(--ug-border-subtle);
+  border-radius: var(--ug-radius-pill);
+  background: rgba(7, 5, 12, 0.55);
+}
+
+.right-sidebar__tab {
+  padding: 7px 8px;
+  border-radius: var(--ug-radius-pill);
+  color: var(--ug-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.right-sidebar__tab.is-active {
+  color: var(--ug-text);
+  background: linear-gradient(180deg, rgba(123, 77, 184, 0.55), rgba(74, 40, 120, 0.65));
+  box-shadow: none;
+}
+
+.right-sidebar__body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.lyrics p {
+  margin: 0 0 12px;
+  font-family: var(--ug-font-literary);
+  font-size: 1.25rem;
+  line-height: 1.35;
+  color: var(--ug-text-faint);
+  transition: color var(--ug-duration) var(--ug-ease);
+}
+
+.lyrics p.is-active {
+  color: var(--ug-amethyst-bright);
+  text-shadow: none;
+  font-weight: 600;
+}
+
+.lyrics__note,
+.about__empty,
+.related__note {
+  margin-top: var(--ug-space-4);
+  color: var(--ug-text-faint);
+  font-size: 12px;
+  font-family: var(--ug-font-body);
+  font-style: italic;
+}
+
+.about p {
+  margin: 0 0 10px;
+  color: var(--ug-text-soft);
+}
+
+.about strong {
+  color: var(--ug-gold-bright);
+  font-weight: 600;
+}
+
+.about__artist {
+  margin-top: var(--ug-space-4);
+  padding-top: var(--ug-space-3);
+  border-top: 1px solid var(--ug-border-subtle);
+}
+
+.about__artist h3 {
+  margin: 0 0 8px;
+  font-family: var(--ug-font-display);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ug-gold);
+}
+
+.about__albums {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+
+.about__albums button {
+  display: block;
+  width: 100%;
+  padding: 6px 0;
+  text-align: left;
+  color: var(--ug-text-soft);
+  font-size: 13px;
+}
+
+.about__albums button:hover {
+  color: var(--ug-gold-bright);
+}
+
+.about__play-artist {
+  margin-top: 12px;
+  padding: 8px 12px;
+  border-radius: var(--ug-radius-sm);
+  border: 1px solid rgba(201, 164, 92, 0.35);
+  color: var(--ug-gold-bright);
+  font-size: 12px;
+}
+
+.about__play-artist:hover {
+  background: rgba(201, 164, 92, 0.1);
+}
+
+.related-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ug-space-3);
+}
+
+.related-block h3 {
+  margin: 0 0 4px;
+  font-family: var(--ug-font-display);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ug-gold);
+}
+
+.lyrics-rail {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.related {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.related li {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--ug-border-subtle);
+}
+
+.related strong {
+  display: block;
+  font-size: 13px;
+}
+
+.related span {
+  color: var(--ug-text-muted);
+  font-size: 12px;
+}
+
+.related button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--ug-radius-sm);
+  border: 1px solid var(--ug-border-subtle);
+  color: var(--ug-text-soft);
+}
+
+.related button:hover {
+  color: var(--ug-gold-warm);
+  border-color: var(--ug-border);
+}
+
+.related button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.related__note {
+  border: none;
+  display: block;
+  padding-top: var(--ug-space-3);
+}

@@ -1,0 +1,222 @@
+.playlist-tracks {
+  padding: 8px 8px 24px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.playlist-tracks__head,
+.playlist-tracks__row {
+  grid-template-columns:
+    56px minmax(200px, 2.4fr) minmax(120px, 1.3fr) minmax(100px, 0.9fr) minmax(110px, 140px);
+}
+
+.playlist-tracks__head {
+  padding: 0 16px 8px;
+  margin: 0 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--ug-text-faint);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
+/* Nudge Album label + values left toward the Title column */
+.playlist-tracks__head > span:nth-child(3),
+.playlist-tracks__row .track-table__album {
+  text-align: left;
+  transform: translateX(-12px);
+}
+
+/* Match row end: [like] [duration] [more] so the clock sits over the times */
+.playlist-tracks__clock {
+  display: grid;
+  grid-template-columns: 32px minmax(44px, 1fr) 32px;
+  gap: 6px;
+  width: 100%;
+  color: inherit;
+}
+
+.playlist-tracks__clock > * {
+  grid-column: 2;
+  justify-self: center;
+  align-self: center;
+}
+
+.playlist-tracks__row .track-table__end {
+  display: grid;
+  grid-template-columns: 32px minmax(44px, 1fr) 32px;
+  gap: 6px;
+  width: 100%;
+  justify-content: stretch;
+}
+
+.playlist-tracks__row .track-table__duration {
+  text-align: center;
+  justify-self: center;
+}
+
+.playlist-tracks__list {
+  max-height: none;
+  padding: 8px 8px 0;
+}
+
+.playlist-tracks__row {
+  position: relative;
+  padding: 12px 16px;
+  border-radius: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.075);
+  color: var(--ug-text-soft);
+}
+
+.playlist-tracks__row .track-table__title strong {
+  color: rgba(232, 224, 245, 0.82);
+  font-weight: 600;
+  text-decoration: none;
+  text-underline-offset: 3px;
+  transition:
+    color var(--ug-duration) var(--ug-ease),
+    text-decoration-color var(--ug-duration) var(--ug-ease);
+}
+
+.playlist-tracks__row .track-table__title span,
+.playlist-tracks__row .track-table__album,
+.playlist-tracks__row .track-table__date,
+.playlist-tracks__row .track-table__duration {
+  color: rgba(168, 156, 188, 0.78);
+}
+
+.playlist-tracks__row:last-child {
+  border-bottom: none;
+}
+
+.playlist-tracks__row:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Bigger simple play icon on hover — purple, no orb chrome */
+.playlist-tracks__row .track-table__num-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.playlist-tracks__row .track-table__play-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.playlist-tracks__row:hover .track-table__play-icon,
+.playlist-tracks__row.is-active .track-table__play-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.playlist-tracks__row:hover .track-table__num-btn,
+.playlist-tracks__row.is-active .track-table__num-btn {
+  color: #b48ae8;
+  background: transparent;
+  background-image: none;
+  border: none;
+  box-shadow: none;
+}
+
+.playlist-tracks__row:hover .track-table__num-btn:hover {
+  color: #d2b4ff;
+  background: rgba(123, 77, 184, 0.16);
+  background-image: none;
+}
+
+.playlist-tracks__row.is-drop-before::before,
+.playlist-tracks__row.is-drop-after::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--ug-gold-bright);
+  box-shadow: 0 0 8px rgba(232, 200, 120, 0.55);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.playlist-tracks__row.is-drop-before::before {
+  top: -1px;
+}
+
+.playlist-tracks__row.is-drop-after::after {
+  bottom: -1px;
+}
+
+.playlist-tracks__row.is-active {
+  background: rgba(123, 77, 184, 0.18);
+  box-shadow: inset 2px 0 0 rgba(201, 164, 92, 0.55);
+}
+
+.playlist-tracks__row.is-focused {
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: inset 2px 0 0 rgba(201, 164, 92, 0.55);
+}
+
+.playlist-tracks__row.is-active .track-table__title strong {
+  color: var(--ug-gold-bright);
+}
+
+.playlist-tracks__row .track-table__title strong:hover {
+  color: var(--ug-gold-bright);
+  text-decoration: underline;
+  text-decoration-color: var(--ug-gold-bright);
+  cursor: pointer;
+}
+
+.playlist-tracks__like,
+.playlist-tracks__more {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 0;
+  color: var(--ug-text-faint);
+  opacity: 0;
+  background: transparent;
+  line-height: 0;
+}
+
+.playlist-tracks__like .ug-icon {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.playlist-tracks__row:hover .playlist-tracks__like,
+.playlist-tracks__row:hover .playlist-tracks__more,
+.playlist-tracks__like.is-liked {
+  opacity: 1;
+}
+
+.playlist-tracks__more:hover {
+  color: var(--ug-text);
+}
+
+.playlist-tracks__like.is-liked {
+  color: var(--ug-amethyst-bright);
+  background: transparent;
+}
+
+.playlist-tracks__like:hover {
+  color: var(--ug-text);
+  background: transparent;
+}
+
+.playlist-tracks__like.is-liked:hover {
+  color: var(--ug-amethyst);
+  background: transparent;
+}
+
+.track-table__row.is-dragging {
+  opacity: 0.45;
+}

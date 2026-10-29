@@ -1,0 +1,33 @@
+appId: com.umbrix.groove
+productName: Umbrix Groove
+directories:
+  buildResources: build
+files:
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!electron.vite.config.{js,ts,mjs,cjs}'
+  - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
+  - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
+  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+extraResources:
+  - from: resources
+    to: .
+    filter:
+      - '**/*'
+asarUnpack:
+  - 'resources/**'
+win:
+  executableName: UmbrixGroove
+  icon: icon.ico
+nsis:
+  installerIcon: icon.ico
+  uninstallerIcon: icon.ico
+  artifactName: ${name}-${version}-setup.${ext}
+  shortcutName: ${productName}
+  uninstallDisplayName: ${productName}
+  createDesktopShortcut: always
+publish:
+  provider: github
+  owner: Voidismm
+  repo: Umbrix-Groove
+npmRebuild: false

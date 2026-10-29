@@ -1,0 +1,168 @@
+@import '@fontsource/cinzel/400.css';
+@import '@fontsource/cinzel/600.css';
+@import '@fontsource/cinzel/700.css';
+@import '@fontsource/cormorant-garamond/400.css';
+@import '@fontsource/cormorant-garamond/600.css';
+@import '@fontsource/source-sans-3/400.css';
+@import '@fontsource/source-sans-3/500.css';
+@import '@fontsource/source-sans-3/600.css';
+@import './tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  overflow: hidden;
+  color: var(--ug-text);
+  font-family: var(--ug-font-body);
+  font-size: 14px;
+  line-height: 1.45;
+  background: var(--ug-obsidian);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
+}
+
+button:focus-visible,
+a:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--ug-gold-bright);
+  outline-offset: 2px;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+/* Inset scrollbars so they clear rounded panel corners */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201, 164, 92, 0.4) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+  /* Pull the track away from curved corners */
+  margin-block: 14px;
+  margin-inline: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(201, 164, 92, 0.32);
+  border-radius: var(--ug-radius-pill);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(201, 164, 92, 0.5);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.gold-frame {
+  position: relative;
+  border: 1px solid var(--ug-border);
+  border-radius: var(--ug-radius-lg);
+  overflow: hidden;
+  box-shadow:
+    inset 0 0 0 1px rgba(201, 164, 92, 0.08),
+    0 0 0 1px rgba(0, 0, 0, 0.4);
+}
+
+/* Scroll areas inside rounded shells — keeps the bar off the curve */
+.ug-scroll {
+  overflow: auto;
+  scrollbar-gutter: stable;
+}
+
+.gold-frame::before,
+.gold-frame::after {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  pointer-events: none;
+  border: 1px solid var(--ug-gold-dim);
+  opacity: 0.85;
+}
+
+.gold-frame::before {
+  top: -1px;
+  left: -1px;
+  border-right: none;
+  border-bottom: none;
+}
+
+.gold-frame::after {
+  right: -1px;
+  bottom: -1px;
+  border-left: none;
+  border-top: none;
+}
+
+/* Pack icons from `icons/` → `src/renderer/src/assets/icons` */
+.ug-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  line-height: 0;
+  color: inherit;
+}
+
+.ug-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+html[data-density='compact'] {
+  --ug-space-3: 10px;
+  --ug-space-4: 12px;
+  --ug-space-5: 18px;
+  --ug-space-6: 24px;
+  --ug-footer-h: 80px;
+}
+
+html[data-reduce-motion='true'] *,
+html[data-reduce-motion='true'] *::before,
+html[data-reduce-motion='true'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}

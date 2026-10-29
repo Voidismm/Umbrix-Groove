@@ -1,0 +1,61 @@
+:root {
+  /* Surfaces */
+  --ug-void: #07050c;
+  --ug-obsidian: #0a070f;
+  --ug-ink: #120c1c;
+  --ug-panel: #161022;
+  --ug-panel-raised: #1c152c;
+  --ug-panel-hover: #241c38;
+
+  /* Accents */
+  --ug-gold: #c9a45c;
+  --ug-gold-bright: #e8c878;
+  --ug-gold-warm: #9a6b2e;
+  --ug-gold-dim: #8a6f3a;
+  --ug-amethyst: #7b4db8;
+  --ug-amethyst-bright: #a56de8;
+  --ug-amethyst-deep: #4a2878;
+  --ug-glow: rgba(165, 109, 232, 0.14);
+  /* Active toggle controls (shuffle, repeat, mute, open panels) */
+  --ug-control-active: #6fd4a0;
+  --ug-control-active-bright: #8eecc0;
+  --ug-control-active-glow: rgba(111, 212, 160, 0.35);
+
+  /* Text */
+  --ug-text: #f2ebff;
+  --ug-text-soft: #c8bdd9;
+  --ug-text-muted: #8a7fa0;
+  --ug-text-faint: #5c536e;
+
+  /* Borders */
+  --ug-border: rgba(201, 164, 92, 0.35);
+  --ug-border-strong: rgba(201, 164, 92, 0.65);
+  --ug-border-subtle: rgba(201, 164, 92, 0.18);
+
+  /* Typography — body everywhere; brand wordmark keeps Cinzel */
+  --ug-font-body: 'Source Sans 3', 'Segoe UI', sans-serif;
+  --ug-font-brand: 'Cinzel', 'Times New Roman', serif;
+  --ug-font-display: var(--ug-font-body);
+  --ug-font-literary: var(--ug-font-body);
+
+  /* Layout */
+  --ug-titlebar-h: 50px;
+  --ug-footer-h: 92px;
+  --ug-sidebar-left: 268px;
+  --ug-sidebar-right: 300px;
+  --ug-radius-sm: 10px;
+  --ug-radius-md: 16px;
+  --ug-radius-lg: 22px;
+  --ug-radius-xl: 28px;
+  --ug-radius-pill: 999px;
+  --ug-space-1: 4px;
+  --ug-space-2: 8px;
+  --ug-space-3: 12px;
+  --ug-space-4: 16px;
+  --ug-space-5: 24px;
+  --ug-space-6: 32px;
+
+  /* Motion */
+  --ug-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ug-duration: 220ms;
+}

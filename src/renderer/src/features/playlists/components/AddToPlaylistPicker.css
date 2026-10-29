@@ -1,0 +1,99 @@
+.add-to-playlist-picker {
+  display: flex;
+  flex-direction: column;
+  width: min(260px, calc(100vw - 16px));
+  max-height: min(360px, calc(100vh - 24px));
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(201, 164, 92, 0.28);
+  background: linear-gradient(180deg, #1d162c, #120c1c);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+  -webkit-app-region: no-drag;
+}
+
+.add-to-playlist-picker.is-fixed {
+  position: fixed;
+  z-index: 130;
+}
+
+.add-to-playlist-picker__search {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.add-to-playlist-picker__search input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(201, 164, 92, 0.22);
+  background: rgba(7, 5, 12, 0.72);
+  color: var(--ug-text);
+  font: inherit;
+  font-size: 13px;
+}
+
+.add-to-playlist-picker__search input::placeholder {
+  color: var(--ug-text-muted);
+}
+
+.add-to-playlist-picker__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(242, 235, 255, 0.92);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.add-to-playlist-picker__row span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.add-to-playlist-picker__row:hover {
+  background: rgba(123, 77, 184, 0.28);
+  color: #fff;
+}
+
+.add-to-playlist-picker__row--action {
+  margin-bottom: 4px;
+  color: var(--ug-gold-bright);
+}
+
+.add-to-playlist-picker__list {
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-right: 2px;
+}
+
+.add-to-playlist-picker__empty {
+  margin: 8px 6px;
+  color: var(--ug-text-muted);
+  font-size: 12px;
+}
+
+.add-to-playlist-picker__visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
