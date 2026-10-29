@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { LibraryProvider } from '@renderer/features/library'
 import { PlaybackProvider, QueuePanel } from '@renderer/features/player'
 import { PlaylistProvider } from '@renderer/features/playlists'
@@ -66,11 +66,54 @@ function ShellFrame(): React.JSX.Element {
   const [dragging, setDragging] = useState<DragSide | null>(null)
   const [windowMaximized, setWindowMaximized] = useState(false)
 
+  const bodyRef = useRef<HTMLDivElement>(null)
   const leftExpandedRef = useRef(initialShell.leftWidth)
   const rightExpandedRef = useRef(initialShell.rightWidth)
   const dragRef = useRef<{ side: DragSide; startX: number; startW: number } | null>(null)
+  const rightOpenRef = useRef(initialShell.rightOpen)
+  const liveRef = useRef({
+    leftWidth: initialShell.leftWidth,
+    rightWidth: initialShell.rightWidth,
+    leftCollapsed: initialShell.leftCollapsed
+  })
+  const rafPaintRef = useRef(0)
+
+  const paintColumns = useCallback(() => {
+    const body = bodyRef.current
+    if (!body) return
+    const live = liveRef.current
+    const leftCol = live.leftCollapsed ? LEFT_COLLAPSED : live.leftWidth
+    body.style.gridTemplateColumns = rightOpenRef.current
+      ? `${leftCol}px ${GUTTER}px minmax(0, 1fr) ${GUTTER}px ${live.rightWidth}px`
+      : `${leftCol}px ${GUTTER}px minmax(0, 1fr)`
+  }, [])
+
+  const schedulePaint = useCallback(() => {
+    if (rafPaintRef.current) return
+    rafPaintRef.current = window.requestAnimationFrame(() => {
+      rafPaintRef.current = 0
+      paintColumns()
+    })
+  }, [paintColumns])
+
+  useLayoutEffect(() => {
+    rightOpenRef.current = rightOpen
+    if (dragging) {
+      paintColumns()
+      return
+    }
+    liveRef.current = { leftWidth, rightWidth, leftCollapsed }
+    paintColumns()
+  }, [dragging, leftCollapsed, leftWidth, paintColumns, rightOpen, rightWidth])
 
   useEffect(() => {
+    return () => {
+      if (rafPaintRef.current) window.cancelAnimationFrame(rafPaintRef.current)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (dragging) return
     writeSession(SESSION_KEYS.shell, {
       rightOpen,
       rightTab,
@@ -78,48 +121,57 @@ function ShellFrame(): React.JSX.Element {
       leftWidth,
       rightWidth
     } satisfies ShellSession)
-  }, [leftCollapsed, leftWidth, rightOpen, rightTab, rightWidth])
+  }, [dragging, leftCollapsed, leftWidth, rightOpen, rightTab, rightWidth])
 
   const leftCol = leftCollapsed ? LEFT_COLLAPSED : leftWidth
-  const columns = rightOpen
-    ? `${leftCol}px ${GUTTER}px minmax(0, 1fr) ${GUTTER}px ${rightWidth}px`
-    : `${leftCol}px ${GUTTER}px minmax(0, 1fr)`
 
   const toggleLeft = useCallback(() => {
     setLeftCollapsed((collapsed) => {
       if (!collapsed) {
-        leftExpandedRef.current = leftWidth
+        leftExpandedRef.current = liveRef.current.leftWidth
+        liveRef.current.leftCollapsed = true
         return true
       }
-      setLeftWidth(leftExpandedRef.current)
+      const restored = leftExpandedRef.current
+      liveRef.current.leftWidth = restored
+      liveRef.current.leftCollapsed = false
+      setLeftWidth(restored)
       return false
     })
-  }, [leftWidth])
+  }, [])
 
   const toggleRight = useCallback(() => {
     setRightOpen((open) => {
       if (open) {
-        rightExpandedRef.current = rightWidth
+        rightExpandedRef.current = liveRef.current.rightWidth
         return false
       }
-      setRightWidth(rightExpandedRef.current)
+      const restored = rightExpandedRef.current
+      liveRef.current.rightWidth = restored
+      setRightWidth(restored)
       return true
     })
-  }, [rightWidth])
+  }, [])
 
   const beginResize = useCallback(
     (side: DragSide, event: React.PointerEvent<HTMLDivElement>) => {
       event.preventDefault()
+      const live = liveRef.current
       const startW =
-        side === 'left' ? (leftCollapsed ? LEFT_COLLAPSED : leftWidth) : rightWidth
-      if (side === 'left' && leftCollapsed) {
+        side === 'left'
+          ? live.leftCollapsed
+            ? LEFT_COLLAPSED
+            : live.leftWidth
+          : live.rightWidth
+      if (side === 'left' && live.leftCollapsed) {
+        live.leftCollapsed = false
         setLeftCollapsed(false)
       }
       dragRef.current = { side, startX: event.clientX, startW }
       setDragging(side)
       event.currentTarget.setPointerCapture(event.pointerId)
     },
-    [leftCollapsed, leftWidth, rightWidth]
+    []
   )
 
   useEffect(() => {
@@ -135,34 +187,48 @@ function ShellFrame(): React.JSX.Element {
       const drag = dragRef.current
       if (!drag) return
       const delta = event.clientX - drag.startX
+      const live = liveRef.current
 
       if (drag.side === 'left') {
         const next = drag.startW + delta
         if (next < LEFT_SNAP) {
           leftExpandedRef.current = Math.max(LEFT_MIN, drag.startW)
-          setLeftCollapsed(true)
-          setLeftWidth(leftExpandedRef.current)
+          live.leftWidth = leftExpandedRef.current
+          if (!live.leftCollapsed) {
+            live.leftCollapsed = true
+            setLeftCollapsed(true)
+          }
           dragRef.current = {
             side: 'left',
             startX: event.clientX,
             startW: LEFT_COLLAPSED
           }
+          schedulePaint()
           return
         }
-        setLeftCollapsed(false)
+        if (live.leftCollapsed) {
+          live.leftCollapsed = false
+          setLeftCollapsed(false)
+        }
         const width = clamp(next, LEFT_MIN, LEFT_MAX)
-        setLeftWidth(width)
+        live.leftWidth = width
         leftExpandedRef.current = width
+        schedulePaint()
         return
       }
 
       const next = clamp(drag.startW - delta, RIGHT_MIN, RIGHT_MAX)
-      setRightWidth(next)
+      live.rightWidth = next
       rightExpandedRef.current = next
+      schedulePaint()
     }
 
     const onUp = (): void => {
+      const live = liveRef.current
       dragRef.current = null
+      setLeftWidth(live.leftWidth)
+      setRightWidth(live.rightWidth)
+      setLeftCollapsed(live.leftCollapsed)
       setDragging(null)
     }
 
@@ -174,7 +240,7 @@ function ShellFrame(): React.JSX.Element {
       window.removeEventListener('pointerup', onUp)
       window.removeEventListener('pointercancel', onUp)
     }
-  }, [dragging])
+  }, [dragging, schedulePaint])
 
   return (
     <div
@@ -191,7 +257,7 @@ function ShellFrame(): React.JSX.Element {
         onToggleRight={toggleRight}
         onOpenSettings={() => setSettingsOpen(true)}
       />
-      <div className="app-shell__body" style={{ gridTemplateColumns: columns }}>
+      <div className="app-shell__body" ref={bodyRef}>
         <div className="app-shell__pane app-shell__pane--left">
           <LeftSidebar collapsed={leftCollapsed} />
         </div>
