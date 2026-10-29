@@ -6,6 +6,42 @@
   height: 100%;
 }
 
+.lyrics-panel--idle {
+  align-items: center;
+  justify-content: center;
+  padding: 24px 12px;
+}
+
+.lyrics-panel__play-btn {
+  appearance: none;
+  margin: 0;
+  padding: 14px 18px;
+  border: 1px solid rgba(201, 164, 92, 0.42);
+  border-radius: 10px;
+  background: rgba(18, 12, 28, 0.72);
+  color: var(--ug-gold-bright);
+  font-family: var(--ug-font-body);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+.lyrics-panel__play-btn:hover {
+  color: var(--ug-text);
+  border-color: rgba(201, 164, 92, 0.7);
+  background: rgba(32, 22, 48, 0.9);
+}
+
+.lyrics-panel__play-btn:focus-visible {
+  outline: 2px solid var(--ug-gold);
+  outline-offset: 2px;
+}
+
 .lyrics-panel__scroll {
   flex: 1;
   min-height: 140px;

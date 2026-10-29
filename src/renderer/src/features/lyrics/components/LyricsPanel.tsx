@@ -20,8 +20,32 @@ function activeLineIndex(lines: LyricsPayload['lines'], timeMs: number): number 
   return active
 }
 
-/** Synced / plain lyrics for the now-playing track. */
+/**
+ * Idle until the user clicks play. Leaving the Lyrics tab / closing the sidebar
+ * unmounts this panel, which drops sync work and shows the play prompt again.
+ */
 export function LyricsPanel({ variant = 'sidebar' }: LyricsPanelProps): React.JSX.Element {
+  const [enabled, setEnabled] = useState(false)
+
+  if (!enabled) {
+    return (
+      <div className={`lyrics-panel lyrics-panel--${variant} lyrics-panel--idle`}>
+        <button
+          type="button"
+          className="lyrics-panel__play-btn"
+          onClick={() => setEnabled(true)}
+        >
+          Click to play lyrics
+        </button>
+      </div>
+    )
+  }
+
+  return <LyricsPanelActive variant={variant} />
+}
+
+/** Fetches and syncs lyrics — only mounted while the user has opted in. */
+function LyricsPanelActive({ variant }: { variant: 'sidebar' | 'stage' }): React.JSX.Element {
   const { currentTrack, focusedTrack, currentTime } = usePlayback()
   const track = focusedTrack ?? currentTrack
   const { settings } = useSettings()

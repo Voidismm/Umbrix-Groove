@@ -182,11 +182,12 @@ export function RightSidebar({
       </div>
 
       <div className="right-sidebar__body" role="tabpanel">
-        {tab === 'lyrics' && (
-          <div className="lyrics-rail">
+        {/* Remount lyrics when leaving this tab so sync work stops and play is required again. */}
+        {tab === 'lyrics' ? (
+          <div className="lyrics-rail" key="lyrics-rail">
             <LyricsPanel variant="sidebar" />
           </div>
-        )}
+        ) : null}
 
         {tab === 'about' && (
           <div className="about">
