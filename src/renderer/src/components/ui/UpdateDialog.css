@@ -132,6 +132,11 @@
   color: rgba(242, 235, 255, 0.84);
   font-size: 14px;
   line-height: 1.5;
+  white-space: pre-line;
+}
+
+.update-dialog__message--error {
+  color: var(--ug-control-danger-bright);
 }
 
 .update-dialog__progress {

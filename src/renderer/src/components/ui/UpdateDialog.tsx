@@ -9,7 +9,6 @@ type UpdateDialogProps = {
   phase: UpdatePhase
   version?: string
   percent?: number
-  errorMessage?: string | null
   onAccept: () => void
   onDismiss: () => void
 }
@@ -19,7 +18,6 @@ export function UpdateDialog({
   phase,
   version,
   percent = 0,
-  errorMessage,
   onAccept,
   onDismiss
 }: UpdateDialogProps): React.JSX.Element | null {
@@ -54,7 +52,7 @@ export function UpdateDialog({
         ? "Reaching into the Void for this fuckin' update…"
         : phase === 'ready'
           ? 'Download finished. Restart Umbrix Groove to finish installing.'
-          : (errorMessage ?? 'Something went wrong while updating.')
+          : 'Update failed.\n\nPlease try again in a few minutes.'
 
   const confirmLabel =
     phase === 'available'
@@ -109,7 +107,14 @@ export function UpdateDialog({
           <p className="update-dialog__version">v{version}</p>
         ) : null}
 
-        <p id="update-dialog-message" className="update-dialog__message">
+        <p
+          id="update-dialog-message"
+          className={
+            phase === 'error'
+              ? 'update-dialog__message update-dialog__message--error'
+              : 'update-dialog__message'
+          }
+        >
           {body}
         </p>
 
@@ -160,7 +165,6 @@ export function UpdateDialogHost(): React.JSX.Element | null {
   const [phase, setPhase] = useState<UpdatePhase>(null)
   const [version, setVersion] = useState<string | undefined>()
   const [percent, setPercent] = useState(0)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const versionRef = useRef<string | undefined>(undefined)
 
   useEffect(() => {
@@ -172,7 +176,6 @@ export function UpdateDialogHost(): React.JSX.Element | null {
         versionRef.current = event.version
         setVersion(event.version)
         setPercent(0)
-        setErrorMessage(null)
         setPhase('available')
       } else if (event.type === 'progress') {
         setPhase('downloading')
@@ -183,7 +186,6 @@ export function UpdateDialogHost(): React.JSX.Element | null {
         setPercent(100)
         setPhase('ready')
       } else if (event.type === 'error') {
-        setErrorMessage(event.message)
         setPhase('error')
       }
     })
@@ -196,7 +198,6 @@ export function UpdateDialogHost(): React.JSX.Element | null {
       phase={phase}
       version={version}
       percent={percent}
-      errorMessage={errorMessage}
       onAccept={() => {
         if (phase === 'available') {
           setPhase('downloading')

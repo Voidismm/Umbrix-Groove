@@ -354,6 +354,14 @@
   max-width: 56ch;
 }
 
+.settings-modal__update-error {
+  margin: 12px 0 0;
+  color: var(--ug-control-danger-bright);
+  font-size: 13px;
+  max-width: 56ch;
+  white-space: pre-line;
+}
+
 .settings-modal__hotkey-list,
 .settings-modal__pref-list {
   list-style: none;

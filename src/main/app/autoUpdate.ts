@@ -6,6 +6,9 @@ let awaitingDecision = false
 let pendingDecision: ((accepted: boolean) => void) | null = null
 let lastVersion: string | undefined
 
+const UPDATE_FAILED_MESSAGE =
+  'Update failed.\n\nPlease try again in a few minutes.'
+
 export type UpdateEvent =
   | { type: 'available'; version: string }
   | { type: 'progress'; percent: number }
@@ -53,10 +56,7 @@ export function setupAutoUpdater(): void {
         await autoUpdater.downloadUpdate()
       } catch (err) {
         console.error('[updater] download failed', err)
-        sendUpdateEvent({
-          type: 'error',
-          message: err instanceof Error ? err.message : String(err)
-        })
+        sendUpdateEvent({ type: 'error', message: UPDATE_FAILED_MESSAGE })
       }
     })()
   })
@@ -75,10 +75,7 @@ export function setupAutoUpdater(): void {
 
   autoUpdater.on('error', (err) => {
     console.error('[updater]', err)
-    sendUpdateEvent({
-      type: 'error',
-      message: err instanceof Error ? err.message : String(err)
-    })
+    sendUpdateEvent({ type: 'error', message: UPDATE_FAILED_MESSAGE })
   })
 
   setTimeout(() => {
@@ -128,10 +125,11 @@ export async function checkForUpdatesNow(): Promise<UpdateCheckResult> {
       version: remote
     }
   } catch (err) {
+    console.error('[updater] check failed', err)
     return {
       ok: false,
       status: 'error',
-      message: err instanceof Error ? err.message : String(err)
+      message: UPDATE_FAILED_MESSAGE
     }
   } finally {
     checking = false

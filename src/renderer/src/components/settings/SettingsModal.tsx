@@ -529,10 +529,14 @@ function AboutPane(): React.JSX.Element {
   )
 }
 
+const UPDATE_FAILED_NOTE = 'Update failed.\n\nPlease try again in a few minutes.'
+
 function UpdatesPane(): React.JSX.Element {
   const [version, setVersion] = useState('…')
   const [updateBusy, setUpdateBusy] = useState(false)
-  const [updateNote, setUpdateNote] = useState<string | null>(null)
+  const [updateNote, setUpdateNote] = useState<{ tone: 'info' | 'error'; text: string } | null>(
+    null
+  )
 
   useEffect(() => {
     if (!window.api?.app?.getVersion) {
@@ -560,16 +564,31 @@ function UpdatesPane(): React.JSX.Element {
           setUpdateNote(null)
           void window.api.app
             .checkForUpdates()
-            .then((result) => setUpdateNote(result.message))
-            .catch((err) =>
-              setUpdateNote(err instanceof Error ? err.message : String(err))
-            )
+            .then((result) => {
+              if (result.status === 'error') {
+                setUpdateNote({ tone: 'error', text: UPDATE_FAILED_NOTE })
+                return
+              }
+              setUpdateNote({ tone: 'info', text: result.message })
+            })
+            .catch(() => setUpdateNote({ tone: 'error', text: UPDATE_FAILED_NOTE }))
             .finally(() => setUpdateBusy(false))
         }}
       >
         {updateBusy ? 'Checking…' : 'Check for updates'}
       </button>
-      {updateNote ? <p className="settings-modal__hint">{updateNote}</p> : null}
+      {updateNote ? (
+        <p
+          className={
+            updateNote.tone === 'error'
+              ? 'settings-modal__update-error'
+              : 'settings-modal__hint'
+          }
+          role={updateNote.tone === 'error' ? 'alert' : undefined}
+        >
+          {updateNote.text}
+        </p>
+      ) : null}
     </div>
   )
 }
