@@ -3,11 +3,13 @@ import { autoUpdater } from 'electron-updater'
 
 let checking = false
 let awaitingDecision = false
+let downloadInProgress = false
 let pendingDecision: ((accepted: boolean) => void) | null = null
 let lastVersion: string | undefined
 
-const UPDATE_FAILED_MESSAGE =
-  'Update failed.\n\nPlease try again in a few minutes.'
+/** Safe copy only — never forward electron-updater / HTTP dumps to the UI. */
+export const UPDATE_FAILED_MESSAGE =
+  'Update failed.\n\nPlease try again later.'
 
 export type UpdateEvent =
   | { type: 'available'; version: string }
@@ -52,11 +54,14 @@ export function setupAutoUpdater(): void {
       sendUpdateEvent({ type: 'available', version: info.version })
       const ok = await waitForDecision()
       if (!ok) return
+      downloadInProgress = true
       try {
         await autoUpdater.downloadUpdate()
       } catch (err) {
         console.error('[updater] download failed', err)
         sendUpdateEvent({ type: 'error', message: UPDATE_FAILED_MESSAGE })
+      } finally {
+        downloadInProgress = false
       }
     })()
   })
@@ -67,6 +72,7 @@ export function setupAutoUpdater(): void {
 
   autoUpdater.on('update-downloaded', () => {
     void (async () => {
+      downloadInProgress = false
       sendUpdateEvent({ type: 'ready', version: lastVersion })
       const ok = await waitForDecision()
       if (ok) autoUpdater.quitAndInstall(false, true)
@@ -75,6 +81,10 @@ export function setupAutoUpdater(): void {
 
   autoUpdater.on('error', (err) => {
     console.error('[updater]', err)
+    // Check failures (launch / Settings) stay quiet in the UI dialog.
+    // Only surface a dialog if the user already started a download.
+    if (!downloadInProgress) return
+    downloadInProgress = false
     sendUpdateEvent({ type: 'error', message: UPDATE_FAILED_MESSAGE })
   })
 

@@ -52,7 +52,7 @@ export function UpdateDialog({
         ? "Reaching into the Void for this fuckin' update…"
         : phase === 'ready'
           ? 'Download finished. Restart Umbrix Groove to finish installing.'
-          : 'Update failed.\n\nPlease try again in a few minutes.'
+          : 'Update failed.\n\nPlease try again later.'
 
   const confirmLabel =
     phase === 'available'

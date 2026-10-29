@@ -529,7 +529,7 @@ function AboutPane(): React.JSX.Element {
   )
 }
 
-const UPDATE_FAILED_NOTE = 'Update failed.\n\nPlease try again in a few minutes.'
+const UPDATE_FAILED_NOTE = 'Update failed.\n\nPlease try again later.'
 
 function UpdatesPane(): React.JSX.Element {
   const [version, setVersion] = useState('…')
