@@ -1,6 +1,6 @@
 {
   "name": "umbrix-groove",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Umbrix Groove — local-first gothic desktop music player",
   "main": "./out/main/index.js",
   "author": "Umbrix",

@@ -88,7 +88,7 @@ const NAV_ITEMS: SettingsNavItem[] = [
   {
     id: 'updates',
     label: 'Updates',
-    description: 'Check for and install new Groove builds.',
+    description: 'Check for new Umbrix Groove builds.',
     icon: 'download',
     keywords: 'updates upgrade version release github install check'
   }
@@ -547,16 +547,8 @@ function UpdatesPane(): React.JSX.Element {
       <p className="settings-modal__about-brand">Updates</p>
       <p>Installed version {version}</p>
       <p className="settings-modal__hint">
-        Groove checks{' '}
-        <a
-          href="https://github.com/Voidismm/Umbrix-Groove/releases"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          GitHub Releases
-        </a>{' '}
-        on launch. You can also check here anytime — if a build is waiting, the install
-        prompt appears in-app.
+        Umbrix Groove will check for updates on launch. You can check here if there are any
+        updates. Otherwise Umbrix Groove will update when you next launch the application.
       </p>
       <button
         type="button"
