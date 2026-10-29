@@ -30,4 +30,5 @@ publish:
   provider: github
   owner: Voidismm
   repo: Umbrix-Groove
+  releaseType: release
 npmRebuild: false
