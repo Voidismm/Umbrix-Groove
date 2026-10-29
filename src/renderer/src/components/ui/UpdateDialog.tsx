@@ -36,7 +36,9 @@ export function UpdateDialog({
 
   const title =
     phase === 'available'
-      ? 'Update available'
+      ? version
+        ? `Umbrix Groove ${version}`
+        : 'Update available'
       : phase === 'downloading'
         ? 'Downloading update'
         : phase === 'ready'
@@ -45,9 +47,11 @@ export function UpdateDialog({
 
   const body =
     phase === 'available'
-      ? `Umbrix Groove ${version ? `v${version}` : 'has a new build'} is ready. Install it when you want — your library stays put.`
+      ? version
+        ? `Update ${version} is ready.`
+        : 'An update is ready.'
       : phase === 'downloading'
-        ? 'Pulling the new build from GitHub Releases…'
+        ? "Reaching into the Void for this fuckin' update…"
         : phase === 'ready'
           ? 'Download finished. Restart Umbrix Groove to finish installing.'
           : (errorMessage ?? 'Something went wrong while updating.')
@@ -101,7 +105,7 @@ export function UpdateDialog({
           ) : null}
         </header>
 
-        {version && phase !== 'error' ? (
+        {version && phase !== 'error' && phase !== 'available' ? (
           <p className="update-dialog__version">v{version}</p>
         ) : null}
 

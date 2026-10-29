@@ -25,6 +25,7 @@ type SettingsSectionId =
   | 'library'
   | 'lyrics'
   | 'about'
+  | 'updates'
 
 type SettingsNavItem = {
   id: SettingsSectionId
@@ -83,6 +84,13 @@ const NAV_ITEMS: SettingsNavItem[] = [
     description: 'Version and local-first notes.',
     icon: 'star',
     keywords: 'about version umbrix credits'
+  },
+  {
+    id: 'updates',
+    label: 'Updates',
+    description: 'Check for and install new Groove builds.',
+    icon: 'download',
+    keywords: 'updates upgrade version release github install check'
   }
 ]
 
@@ -334,6 +342,7 @@ export function SettingsModal({ open, onClose }: SettingsModalProps): React.JSX.
               ) : null}
 
               {section === 'about' ? <AboutPane /> : null}
+              {section === 'updates' ? <UpdatesPane /> : null}
             </div>
           </section>
         </div>
@@ -500,8 +509,6 @@ function TogglePrefRow({
 
 function AboutPane(): React.JSX.Element {
   const [version, setVersion] = useState('…')
-  const [updateBusy, setUpdateBusy] = useState(false)
-  const [updateNote, setUpdateNote] = useState<string | null>(null)
 
   useEffect(() => {
     if (!window.api?.app?.getVersion) {
@@ -516,15 +523,40 @@ function AboutPane(): React.JSX.Element {
       <p className="settings-modal__about-brand">Umbrix Groove</p>
       <p>Version {version}</p>
       <p className="settings-modal__hint">
-        Updates come from{' '}
+        Local-first desktop player. Your library stays on this machine.
+      </p>
+    </div>
+  )
+}
+
+function UpdatesPane(): React.JSX.Element {
+  const [version, setVersion] = useState('…')
+  const [updateBusy, setUpdateBusy] = useState(false)
+  const [updateNote, setUpdateNote] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!window.api?.app?.getVersion) {
+      setVersion('0.1.0')
+      return
+    }
+    void window.api.app.getVersion().then(setVersion).catch(() => setVersion('0.1.0'))
+  }, [])
+
+  return (
+    <div className="settings-modal__about">
+      <p className="settings-modal__about-brand">Updates</p>
+      <p>Installed version {version}</p>
+      <p className="settings-modal__hint">
+        Groove checks{' '}
         <a
           href="https://github.com/Voidismm/Umbrix-Groove/releases"
           target="_blank"
           rel="noopener noreferrer"
         >
           GitHub Releases
-        </a>
-        . The installed app checks on launch and can prompt you to install.
+        </a>{' '}
+        on launch. You can also check here anytime — if a build is waiting, the install
+        prompt appears in-app.
       </p>
       <button
         type="button"

@@ -46,6 +46,7 @@ const ALIASES: Record<string, string> = {
   'settings-heart': 'settings-heart',
   palette: 'palette',
   browse: 'queue',
+  download: 'download',
   volume: 'volume_up',
   'volume-up': 'volume_up',
   'volume-down': 'volume_down',
