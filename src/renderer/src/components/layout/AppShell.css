@@ -32,9 +32,11 @@
   user-select: none;
 }
 
-.app-shell--resizing * {
-  cursor: col-resize !important;
-  user-select: none !important;
+/* Keep hit-testing off pane chrome while dragging; avoid the old
+   universal `*` cursor rule that restyled the whole tree. */
+.app-shell--resizing .app-shell__pane {
+  pointer-events: none;
+  contain: layout style;
 }
 
 .app-shell__pane {

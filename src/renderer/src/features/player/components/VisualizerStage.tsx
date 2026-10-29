@@ -29,6 +29,7 @@ import { createAudioTextures } from '../nowPlaying/vis/renderer/audioTextures'
 import { createRenderer, fitRenderer } from '../nowPlaying/vis/renderer/createRenderer'
 import { resolveMilkdropPresetData } from '../nowPlaying/vis/scenes/milkdrop'
 import type { VisFamily, Visualization } from '../nowPlaying/vis/types'
+import { isShellResizing, SHELL_RESIZE_END_EVENT } from '@renderer/lib/shellResize'
 import './VisualizerStage.css'
 
 type ButterchurnVisualizer = ReturnType<ReturnType<typeof getButterchurn>['createVisualizer']>
@@ -171,6 +172,7 @@ export function VisualizerStage(): React.JSX.Element | null {
     }
 
     const resize = (): void => {
+      if (isShellResizing()) return
       const { w, h } = fitRenderer(renderer, viewport.clientWidth, viewport.clientHeight)
       active?.resize(w, h)
     }
@@ -179,6 +181,7 @@ export function VisualizerStage(): React.JSX.Element | null {
     resize()
     const ro = new ResizeObserver(resize)
     ro.observe(viewport)
+    window.addEventListener(SHELL_RESIZE_END_EVENT, resize)
 
     const loop = createLoop((dt) => {
       if (visIdRef.current !== currentId) mountVis(visIdRef.current)
@@ -204,6 +207,7 @@ export function VisualizerStage(): React.JSX.Element | null {
     return () => {
       loop.stop()
       ro.disconnect()
+      window.removeEventListener(SHELL_RESIZE_END_EVENT, resize)
       canvas.removeEventListener('webglcontextlost', onLost)
       active?.dispose()
       audioTextures.dispose()
@@ -222,6 +226,7 @@ export function VisualizerStage(): React.JSX.Element | null {
     let raf = 0
     let visualizer: ButterchurnVisualizer | null = null
     let ro: ResizeObserver | null = null
+    let onShellResizeEnd: (() => void) | null = null
 
     const waveScratch = new Uint8Array(BUTTERCHURN_FFT_SIZE)
 
@@ -299,6 +304,7 @@ export function VisualizerStage(): React.JSX.Element | null {
       }
 
       const resize = (): void => {
+        if (isShellResizing()) return
         if (!visualizer) return
         const el = butterCanvasRef.current
         if (!el) return
@@ -314,6 +320,8 @@ export function VisualizerStage(): React.JSX.Element | null {
       resize()
       ro = new ResizeObserver(resize)
       ro.observe(viewport)
+      onShellResizeEnd = resize
+      window.addEventListener(SHELL_RESIZE_END_EVENT, resize)
 
       const tick = (): void => {
         if (disposed || !visualizer) return
@@ -336,6 +344,9 @@ export function VisualizerStage(): React.JSX.Element | null {
       disposed = true
       cancelAnimationFrame(raf)
       ro?.disconnect()
+      if (onShellResizeEnd) {
+        window.removeEventListener(SHELL_RESIZE_END_EVENT, onShellResizeEnd)
+      }
       const node = butterNodeRef.current
       if (visualizer && node) {
         try {

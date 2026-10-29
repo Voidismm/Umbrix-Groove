@@ -166,3 +166,11 @@ html[data-reduce-motion='true'] *::after {
   transition-duration: 0.01ms !important;
   scroll-behavior: auto !important;
 }
+
+/* Pane drag: freeze motion so layout ticks are not fighting CSS transitions. */
+html[data-shell-resizing='1'] *,
+html[data-shell-resizing='1'] *::before,
+html[data-shell-resizing='1'] *::after {
+  transition: none !important;
+  animation: none !important;
+}

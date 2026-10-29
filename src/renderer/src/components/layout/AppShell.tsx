@@ -11,6 +11,7 @@ import { PlayerFooter } from './PlayerFooter'
 import { RightSidebar, type RightTabId } from './RightSidebar'
 import { TitleBar } from './TitleBar'
 import { readSession, SESSION_KEYS, writeSession } from '@renderer/lib/session'
+import { setShellResizing } from '@renderer/lib/shellResize'
 import './AppShell.css'
 
 const LEFT_DEFAULT = 268
@@ -168,6 +169,7 @@ function ShellFrame(): React.JSX.Element {
         setLeftCollapsed(false)
       }
       dragRef.current = { side, startX: event.clientX, startW }
+      setShellResizing(true)
       setDragging(side)
       event.currentTarget.setPointerCapture(event.pointerId)
     },
@@ -229,6 +231,7 @@ function ShellFrame(): React.JSX.Element {
       setLeftWidth(live.leftWidth)
       setRightWidth(live.rightWidth)
       setLeftCollapsed(live.leftCollapsed)
+      setShellResizing(false)
       setDragging(null)
     }
 
@@ -239,6 +242,7 @@ function ShellFrame(): React.JSX.Element {
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)
       window.removeEventListener('pointercancel', onUp)
+      setShellResizing(false)
     }
   }, [dragging, schedulePaint])
 
