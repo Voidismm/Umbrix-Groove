@@ -932,6 +932,7 @@
 
 .playlists-page__icon-btn.is-active {
   color: var(--ug-control-active-bright);
+  filter: drop-shadow(0 0 6px rgba(125, 255, 181, 0.45));
 }
 
 .playlists-page__pills {

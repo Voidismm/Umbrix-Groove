@@ -289,7 +289,7 @@ export function PlayerFooter({
           <div className="player-footer__volume" ref={volumeWrapRef}>
             <button
               type="button"
-              className={`player-footer__icon${muted || volume <= 0.001 ? ' is-active' : ''}`}
+              className={`player-footer__icon${muted || volume <= 0.001 ? ' is-muted' : ''}`}
               aria-label={muted || volume <= 0.001 ? 'Unmute' : 'Mute'}
               aria-pressed={muted || volume <= 0.001}
               onClick={toggleMute}

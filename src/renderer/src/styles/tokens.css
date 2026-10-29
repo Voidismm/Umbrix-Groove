@@ -16,10 +16,13 @@
   --ug-amethyst-bright: #a56de8;
   --ug-amethyst-deep: #4a2878;
   --ug-glow: rgba(165, 109, 232, 0.14);
-  /* Active toggle controls (shuffle, repeat, mute, open panels) */
-  --ug-control-active: #6fd4a0;
-  --ug-control-active-bright: #8eecc0;
-  --ug-control-active-glow: rgba(111, 212, 160, 0.35);
+  /* Active toggle controls (shuffle, repeat, open panels) */
+  --ug-control-active: #7dffb5;
+  --ug-control-active-bright: #b6ffd6;
+  --ug-control-active-glow: rgba(125, 255, 181, 0.42);
+  /* Mute / off states */
+  --ug-control-danger: #ff6b7a;
+  --ug-control-danger-bright: #ff8f9a;
 
   /* Text */
   --ug-text: #f2ebff;
