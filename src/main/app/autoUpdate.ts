@@ -1,44 +1,41 @@
-import { app, dialog, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain } from 'electron'
 import { autoUpdater } from 'electron-updater'
 
 let checking = false
-let promptOpen = false
+let awaitingDecision = false
+let pendingDecision: ((accepted: boolean) => void) | null = null
+let lastVersion: string | undefined
 
-async function askInstall(version: string): Promise<boolean> {
-  if (promptOpen) return false
-  promptOpen = true
-  try {
-    const result = await dialog.showMessageBox({
-      type: 'info',
-      buttons: ['Install', 'Later'],
-      defaultId: 0,
-      cancelId: 1,
-      title: 'Umbrix Groove',
-      message: 'Umbrix Groove has a new update. Install?',
-      detail: `Version ${version} is ready to download.`
-    })
-    return result.response === 0
-  } finally {
-    promptOpen = false
+export type UpdateEvent =
+  | { type: 'available'; version: string }
+  | { type: 'progress'; percent: number }
+  | { type: 'ready'; version?: string }
+  | { type: 'error'; message: string }
+
+function sendUpdateEvent(event: UpdateEvent): void {
+  for (const win of BrowserWindow.getAllWindows()) {
+    if (!win.isDestroyed()) win.webContents.send('app:update-event', event)
   }
 }
 
-async function askRestart(): Promise<boolean> {
-  const result = await dialog.showMessageBox({
-    type: 'info',
-    buttons: ['Restart now', 'Later'],
-    defaultId: 0,
-    cancelId: 1,
-    title: 'Umbrix Groove',
-    message: 'Update downloaded.',
-    detail: 'Restart Umbrix Groove to finish installing.'
+function waitForDecision(): Promise<boolean> {
+  if (awaitingDecision) return Promise.resolve(false)
+  awaitingDecision = true
+  return new Promise((resolve) => {
+    pendingDecision = (accepted) => {
+      pendingDecision = null
+      awaitingDecision = false
+      resolve(accepted)
+    }
   })
-  return result.response === 0
+}
+
+function resolveDecision(accepted: boolean): void {
+  pendingDecision?.(accepted)
 }
 
 /**
- * Packaged builds only — checks GitHub Releases and prompts to install.
- * Dev / unpackaged runs skip quietly.
+ * Packaged builds only — checks GitHub Releases and prompts in the renderer UI.
  */
 export function setupAutoUpdater(): void {
   if (!app.isPackaged) return
@@ -48,34 +45,42 @@ export function setupAutoUpdater(): void {
 
   autoUpdater.on('update-available', (info) => {
     void (async () => {
-      const ok = await askInstall(info.version)
+      lastVersion = info.version
+      sendUpdateEvent({ type: 'available', version: info.version })
+      const ok = await waitForDecision()
       if (!ok) return
       try {
         await autoUpdater.downloadUpdate()
       } catch (err) {
         console.error('[updater] download failed', err)
-        await dialog.showMessageBox({
+        sendUpdateEvent({
           type: 'error',
-          title: 'Umbrix Groove',
-          message: 'Could not download the update.',
-          detail: err instanceof Error ? err.message : String(err)
+          message: err instanceof Error ? err.message : String(err)
         })
       }
     })()
   })
 
+  autoUpdater.on('download-progress', (progress) => {
+    sendUpdateEvent({ type: 'progress', percent: progress.percent ?? 0 })
+  })
+
   autoUpdater.on('update-downloaded', () => {
     void (async () => {
-      const ok = await askRestart()
+      sendUpdateEvent({ type: 'ready', version: lastVersion })
+      const ok = await waitForDecision()
       if (ok) autoUpdater.quitAndInstall(false, true)
     })()
   })
 
   autoUpdater.on('error', (err) => {
     console.error('[updater]', err)
+    sendUpdateEvent({
+      type: 'error',
+      message: err instanceof Error ? err.message : String(err)
+    })
   })
 
-  // Give the window a moment to show before the dialog.
   setTimeout(() => {
     void autoUpdater.checkForUpdates().catch((err) => {
       console.error('[updater] check failed', err)
@@ -90,7 +95,7 @@ export type UpdateCheckResult = {
   version?: string
 }
 
-/** Manual check from Settings — still uses the same Install? prompt when a build exists. */
+/** Manual check from Settings — same in-app prompt when a build exists. */
 export async function checkForUpdatesNow(): Promise<UpdateCheckResult> {
   if (!app.isPackaged) {
     return {
@@ -136,4 +141,7 @@ export async function checkForUpdatesNow(): Promise<UpdateCheckResult> {
 export function registerUpdateIpc(): void {
   ipcMain.handle('app:getVersion', () => app.getVersion())
   ipcMain.handle('app:checkForUpdates', () => checkForUpdatesNow())
+  ipcMain.on('app:update-decision', (_event, accepted: unknown) => {
+    resolveDecision(accepted === true)
+  })
 }

@@ -4,6 +4,7 @@ import { PlaybackProvider, QueuePanel } from '@renderer/features/player'
 import { PlaylistProvider } from '@renderer/features/playlists'
 import { SettingsProvider } from '@renderer/features/settings'
 import { SettingsModal } from '../settings/SettingsModal'
+import { UpdateDialogHost } from '../ui/UpdateDialog'
 import { CenterWorkspace } from './CenterWorkspace'
 import { LeftSidebar } from './LeftSidebar'
 import { PlayerFooter } from './PlayerFooter'
@@ -247,6 +248,7 @@ function ShellFrame(): React.JSX.Element {
         }}
       />
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <UpdateDialogHost />
     </div>
   )
 }

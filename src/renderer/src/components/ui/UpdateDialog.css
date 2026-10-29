@@ -1,0 +1,208 @@
+.update-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 160;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(ellipse at 50% 20%, rgba(123, 77, 184, 0.22), transparent 55%),
+    rgba(7, 5, 12, 0.82);
+  -webkit-app-region: no-drag;
+  animation: update-dialog-in 220ms var(--ug-ease);
+}
+
+@keyframes update-dialog-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.update-dialog__panel {
+  position: relative;
+  width: min(440px, 100%);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(165deg, #221832 0%, #120c1c 48%, #0d0914 100%);
+  box-shadow:
+    0 28px 70px rgba(0, 0, 0, 0.62),
+    0 0 0 1px rgba(201, 164, 92, 0.22);
+  border-radius: 14px;
+  animation: update-dialog-panel-in 280ms var(--ug-ease);
+}
+
+@keyframes update-dialog-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.update-dialog__glow {
+  pointer-events: none;
+  position: absolute;
+  inset: -40% -20% auto;
+  height: 70%;
+  background: radial-gradient(circle at 50% 40%, rgba(111, 212, 160, 0.16), transparent 62%);
+  opacity: 0.9;
+}
+
+.update-dialog__head {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 22px 22px 4px;
+}
+
+.update-dialog__brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.update-dialog__logo {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  flex-shrink: 0;
+  filter: drop-shadow(0 6px 16px rgba(123, 77, 184, 0.35));
+}
+
+.update-dialog__eyebrow {
+  margin: 0 0 4px;
+  font-family: var(--ug-font-brand);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ug-gold);
+}
+
+.update-dialog__head h2 {
+  margin: 0;
+  font-family: var(--ug-font-brand);
+  font-size: 1.35rem;
+  letter-spacing: 0.03em;
+  color: var(--ug-text);
+}
+
+.update-dialog__close {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: var(--ug-text-soft);
+  flex-shrink: 0;
+}
+
+.update-dialog__close:hover {
+  color: var(--ug-text);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.update-dialog__version {
+  position: relative;
+  margin: 10px 22px 0;
+  width: fit-content;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(111, 212, 160, 0.4);
+  background: rgba(111, 212, 160, 0.1);
+  color: var(--ug-control-active-bright);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.update-dialog__message {
+  position: relative;
+  margin: 0;
+  padding: 14px 22px 8px;
+  color: rgba(242, 235, 255, 0.84);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.update-dialog__progress {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 22px 4px;
+  color: var(--ug-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.update-dialog__progress-track {
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(7, 5, 12, 0.65);
+  border: 1px solid rgba(242, 235, 255, 0.12);
+}
+
+.update-dialog__progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #4a9a72, var(--ug-control-active-bright));
+  box-shadow: 0 0 12px rgba(111, 212, 160, 0.45);
+  transition: width 160ms linear;
+}
+
+.update-dialog__foot {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 18px 22px 22px;
+}
+
+.update-dialog__btn {
+  padding: 10px 20px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.update-dialog__btn:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.update-dialog__btn--ghost {
+  border: 1px solid rgba(242, 235, 255, 0.28);
+  background: transparent;
+  color: rgba(242, 235, 255, 0.9);
+}
+
+.update-dialog__btn--ghost:hover:not(:disabled) {
+  border-color: rgba(242, 235, 255, 0.5);
+  background: rgba(7, 5, 12, 0.35);
+}
+
+.update-dialog__btn--solid {
+  border: 1px solid rgba(201, 164, 92, 0.45);
+  background: linear-gradient(180deg, #e8c878, #c9a45c);
+  color: #1a1208;
+  box-shadow: 0 6px 18px rgba(201, 164, 92, 0.22);
+}
+
+.update-dialog__btn--solid:hover:not(:disabled) {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}

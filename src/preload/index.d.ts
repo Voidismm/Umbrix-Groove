@@ -122,9 +122,17 @@ export type UpdateCheckResult = {
   version?: string
 }
 
+export type UpdateEvent =
+  | { type: 'available'; version: string }
+  | { type: 'progress'; percent: number }
+  | { type: 'ready'; version?: string }
+  | { type: 'error'; message: string }
+
 export interface UmbrixAppApi {
   getVersion: () => Promise<string>
   checkForUpdates: () => Promise<UpdateCheckResult>
+  respondToUpdate: (accepted: boolean) => void
+  onUpdateEvent: (callback: (event: UpdateEvent) => void) => () => void
 }
 
 export interface UmbrixApi {
