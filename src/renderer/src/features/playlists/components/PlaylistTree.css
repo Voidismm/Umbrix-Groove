@@ -1,4 +1,4 @@
-.playlist-tree {
+﻿.playlist-tree {
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -81,7 +81,7 @@
 }
 
 .playlist-tree__row.is-active {
-  background: linear-gradient(90deg, rgba(123, 77, 184, 0.28), rgba(123, 77, 184, 0.05));
+  background: linear-gradient(90deg, color-mix(in srgb, var(--ug-chrome-wash) 28%, transparent), color-mix(in srgb, var(--ug-chrome-wash) 5%, transparent));
   box-shadow: inset 2px 0 0 var(--ug-gold);
 }
 
@@ -109,7 +109,7 @@
 
 .playlist-tree__twist:hover {
   color: #b48ae8;
-  background: rgba(123, 77, 184, 0.16);
+  background: color-mix(in srgb, var(--ug-chrome-wash) 16%, transparent);
 }
 
 .playlist-tree__main {
@@ -144,7 +144,7 @@
   min-height: 40px;
   border-radius: var(--ug-radius-sm);
   border: 1px solid rgba(201, 164, 92, 0.22);
-  background: linear-gradient(145deg, #2a1848, #120c1c);
+  background: var(--ug-cover-gradient);
   color: var(--ug-gold-bright);
 }
 

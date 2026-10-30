@@ -1,4 +1,4 @@
-.track-table {
+﻿.track-table {
   background: rgba(18, 12, 28, 0.72);
   padding: 12px;
 }
@@ -97,7 +97,7 @@
 
 .track-table__row.is-active {
   color: var(--ug-text);
-  background: rgba(123, 77, 184, 0.16);
+  background: color-mix(in srgb, var(--ug-chrome-wash) 16%, transparent);
 }
 
 .track-table__row.is-active strong {
@@ -210,7 +210,7 @@
   display: grid;
   place-items: center;
   border: 1px solid var(--ug-border-subtle);
-  background: linear-gradient(145deg, #2a1848, #120c1c);
+  background: var(--ug-cover-gradient);
   font-family: var(--ug-font-display);
   color: var(--ug-gold-bright);
 }

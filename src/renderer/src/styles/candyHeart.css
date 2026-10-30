@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Shared candy heart — grey empty / gold border when liked.
  * Avoid CSS filters (expensive in Electron during shell resize).
  * Host needs position: relative. Size via --ug-candy-heart-size.
@@ -62,6 +62,7 @@
 .ug-candy-heart.is-liked::before {
   background: url('../assets/buttons/heart button.png') center / cover no-repeat;
   opacity: 0.92;
+  filter: var(--ug-button-tone-filter, hue-rotate(var(--ug-button-hue-shift, 0deg)));
 }
 
 .ug-candy-heart.is-liked:hover:not(:disabled)::after {
@@ -71,6 +72,7 @@
 .ug-candy-heart.is-liked:hover:not(:disabled)::before {
   background: url('../assets/buttons/heart button.png') center / cover no-repeat;
   opacity: 1;
+  filter: var(--ug-button-tone-filter, hue-rotate(var(--ug-button-hue-shift, 0deg)));
 }
 
 /** Inline sized host (context menus, etc.). */
@@ -101,6 +103,7 @@
 .ug-candy-heart--art::before {
   background: url('../assets/buttons/heart button.png') center / cover no-repeat;
   opacity: 0.92;
+  filter: var(--ug-button-tone-filter, hue-rotate(var(--ug-button-hue-shift, 0deg)));
 }
 
 .ug-candy-heart--art:hover::after {

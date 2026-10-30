@@ -1,4 +1,4 @@
-.playlist-add {
+﻿.playlist-add {
   position: fixed;
   inset: 0;
   z-index: 90;
@@ -15,7 +15,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: linear-gradient(165deg, #221832 0%, #120c1c 48%, #0d0914 100%);
+  background: var(--ug-modal-surface);
   box-shadow:
     0 28px 70px rgba(0, 0, 0, 0.62),
     0 0 0 1px rgba(201, 164, 92, 0.22);
@@ -29,7 +29,7 @@
   margin: 0 20px 12px;
   padding: 10px 12px;
   border-radius: 8px;
-  background: rgba(40, 32, 58, 0.95);
+  background: color-mix(in srgb, var(--ug-button-fill-mid) 68%, rgba(16, 10, 28, 0.95));
   color: var(--ug-text-soft);
 }
 
@@ -75,7 +75,7 @@
 
 .playlist-add__row:hover,
 .playlist-add__row.is-selected {
-  background: rgba(123, 77, 184, 0.22);
+  background: color-mix(in srgb, var(--ug-chrome-wash) 22%, transparent);
 }
 
 .playlist-add__check {

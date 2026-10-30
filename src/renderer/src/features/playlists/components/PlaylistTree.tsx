@@ -97,12 +97,14 @@ function movableChildren(
 function TreeNodeView({
   node,
   depth,
+  compact,
   openMenu,
   dnd,
   playback
 }: {
   node: PlaylistTreeNode
   depth: number
+  compact: boolean
   openMenu: (event: React.MouseEvent, items: PlaylistMenuItem[]) => void
   dnd: TreeDnD
   playback: TreePlayback
@@ -378,7 +380,7 @@ function TreeNodeView({
         ]
           .filter(Boolean)
           .join(' ')}
-        style={{ paddingLeft: 8 + depth * 14 }}
+        style={{ paddingLeft: compact ? 0 : 8 + depth * 14 }}
         draggable={!isSystemPlaylist}
         onDragStart={onDragStart}
         onDragOver={onDragOver}
@@ -465,6 +467,7 @@ function TreeNodeView({
               key={`${child.type}-${child.id}`}
               node={child}
               depth={depth + 1}
+              compact={compact}
               openMenu={openMenu}
               dnd={dnd}
               playback={playback}
@@ -650,6 +653,7 @@ export function PlaylistTree({ compact = false }: PlaylistTreeProps): React.JSX.
             key={`${node.type}-${node.id}`}
             node={node}
             depth={0}
+            compact={compact}
             openMenu={openMenu}
             dnd={dnd}
             playback={playback}

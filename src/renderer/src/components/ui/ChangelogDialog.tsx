@@ -135,14 +135,20 @@ export function ChangelogDialog({
   )
 }
 
+/** Dev-only: force the post-update modal so you can review it. Flip off before ship. */
+const FORCE_CHANGELOG_PREVIEW = false
+
 /**
  * After an update, show what's-new once on next launch.
  * Fresh installs seed the seen version quietly (no modal).
  */
 export function ChangelogDialogHost(): React.JSX.Element | null {
-  const [entry, setEntry] = useState<ChangelogEntry | null>(null)
+  const [entry, setEntry] = useState<ChangelogEntry | null>(
+    FORCE_CHANGELOG_PREVIEW ? (CHANGELOG[0] ?? null) : null
+  )
 
   useEffect(() => {
+    if (FORCE_CHANGELOG_PREVIEW) return
     let cancelled = false
     void (async () => {
       try {

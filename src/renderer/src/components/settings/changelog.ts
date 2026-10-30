@@ -12,6 +12,19 @@ export type ChangelogEntry = {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.1.12',
+    summary:
+      'Added Live Appearance Studio, where you can select premade themes, or create your own themes with the hue, brightness, and saturation sliders.',
+    notes: [
+      'Live Studio Appearance editor floats over the app. You can drag it, use sliders to change buttons, scrollbars, and the UI colors all separately and watch it change and update live.',
+      'Built-in presets: Umbrix, Violet, Ocean, Rose, Ember, Mint, and new Black Noire.',
+      'Save theme lets you save the theme you made and then name it so you can make an infinite amount and switch between them all you want.',
+      'Fixed the folders in the left sidebar when collapsed so that they are centered.',
+      'Folders in the left sidebar when collapsed now use the rounded square look instead of a circle.',
+      'Did a lot of UI and bug fixes that drove me to a deep and growing madness.'
+    ]
+  },
+  {
     version: '0.1.11',
     summary:
       'New UI, Umbrix Galaxy home, edit tracks and lyrics, what\'s-new changelogs, and a bunch more shit I spent too long working on.',

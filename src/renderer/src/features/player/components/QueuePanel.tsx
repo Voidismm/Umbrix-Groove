@@ -272,7 +272,106 @@ export function QueuePanel({ embedded = false, onClose }: QueuePanelProps): Reac
             onRemove={removeFromQueue}
           />
         )}
+        {upcoming.length === 0 && currentTrack ? (
+          <QueueSuggestions
+            seedTrack={currentTrack}
+            excludeIds={queue.map((track) => track.id)}
+            onAdd={(track) => addToQueue(track)}
+          />
+        ) : null}
       </section>
+    </div>
+  )
+}
+
+/** Related library picks when Next up is empty (short playlist / single search play). */
+function QueueSuggestions({
+  seedTrack,
+  excludeIds,
+  onAdd
+}: {
+  seedTrack: TrackRow
+  excludeIds: string[]
+  onAdd: (track: TrackRow) => void
+}): React.JSX.Element | null {
+  const [tracks, setTracks] = useState<TrackRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const excludeKey = excludeIds.join('|')
+
+  useEffect(() => {
+    let cancelled = false
+    const api = window.api?.library?.getRelatedTracks
+    if (!api) {
+      setTracks([])
+      setLoading(false)
+      return
+    }
+    setLoading(true)
+    void api(seedTrack.id, 12)
+      .then((related) => {
+        if (cancelled) return
+        const blocked = new Set(excludeIds)
+        const merged: TrackRow[] = []
+        const push = (row: TrackRow): void => {
+          if (blocked.has(row.id)) return
+          blocked.add(row.id)
+          merged.push(row)
+        }
+        for (const row of related.sameArtist) push(row)
+        for (const row of related.sameAlbum) push(row)
+        for (const row of related.sameGenre) push(row)
+        setTracks(merged.slice(0, 10))
+      })
+      .catch(() => {
+        if (!cancelled) setTracks([])
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+    // excludeKey stands in for excludeIds without re-firing every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seedTrack.id, excludeKey])
+
+  if (!loading && tracks.length === 0) return null
+
+  return (
+    <div className="queue-panel__suggest">
+      <h4>Suggested</h4>
+      <p className="queue-panel__suggest-hint">
+        {loading ? 'Finding similar tracks in your library…' : 'Add more from your library'}
+      </p>
+      {tracks.length > 0 ? (
+        <ul className="queue-panel__list queue-panel__list--compact">
+          {tracks.map((track) => (
+            <li key={`suggest-${track.id}`} className="queue-panel__suggest-row">
+              <button
+                type="button"
+                className="queue-panel__row"
+                onClick={() => onAdd(track)}
+                aria-label={`Add ${track.title} to queue`}
+              >
+                <RowArt artworkKey={track.artworkKey} title={track.title} />
+                <div className="queue-panel__meta">
+                  <strong>{track.title}</strong>
+                  <span>{track.artistName}</span>
+                </div>
+              </button>
+              <button
+                type="button"
+                className="queue-panel__suggest-add"
+                aria-label={`Add ${track.title} to queue`}
+                onClick={() => onAdd(track)}
+              >
+                <Icon name="plus" size={14} />
+                Add
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </div>
   )
 }

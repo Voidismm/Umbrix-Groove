@@ -5,7 +5,7 @@
   padding: 6px;
   border-radius: 10px;
   border: 1px solid rgba(201, 164, 92, 0.28);
-  background: linear-gradient(180deg, #1d162c, #120c1c);
+  background: linear-gradient(180deg, var(--ug-menu-top), var(--ug-menu-bot));
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
   -webkit-app-region: no-drag;
 }
@@ -25,7 +25,7 @@
 }
 
 .playlist-ctx__item:hover:not(:disabled) {
-  background: rgba(123, 77, 184, 0.28);
+  background: color-mix(in srgb, var(--ug-chrome-wash) 28%, transparent);
   color: #d4c8e6;
 }
 

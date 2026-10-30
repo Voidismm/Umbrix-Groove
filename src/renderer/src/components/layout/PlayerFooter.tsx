@@ -380,21 +380,27 @@ export function PlayerFooter({
             >
               <Icon name={volumeIcon} size={18} />
             </button>
-            <input
-              type="range"
-              className="ug-slider"
-              min={0}
-              max={1}
-              step={0.005}
-              value={muted ? 0 : volume}
-              aria-label="Volume"
+            <div
+              className="player-footer__volume-rail"
               style={{ ['--ug-range' as string]: volumePercent }}
-              onChange={(event) => {
-                const nextVol = Number(event.target.value)
-                if (muted && nextVol > 0) toggleMute()
-                setVolume(nextVol)
-              }}
-            />
+            >
+              <input
+                type="range"
+                className="ug-slider ug-slider--bare"
+                min={0}
+                max={1}
+                step={0.005}
+                value={muted ? 0 : volume}
+                aria-label="Volume"
+                onChange={(event) => {
+                  const nextVol = Number(event.target.value)
+                  if (muted && nextVol > 0) toggleMute()
+                  setVolume(nextVol)
+                }}
+              />
+              {/* Custom knob — keeps gold rim out of the Buttons hue filter. */}
+              <span className="player-footer__volume-knob" aria-hidden />
+            </div>
           </div>
         </div>
         <div className="player-footer__tools" aria-label="Playback tools">

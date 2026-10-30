@@ -1,5 +1,14 @@
 /** Persisted app preferences (Settings modal). Separate from ephemeral session keys. */
 
+import {
+  appearanceToThemeHues,
+  DEFAULT_THEME_HUES,
+  findThemeId,
+  sanitizeSavedThemes,
+  type ThemeHues,
+  type ThemePreset
+} from './themePresets'
+
 export const SETTINGS_STORAGE_KEY = 'umbrix.settings'
 
 export type SeekStepSeconds = 5 | 10 | 15
@@ -13,6 +22,19 @@ export type AppSettings = {
     showButtonTips: boolean
     /** Twinkling galaxy wash on titlebar, footer, and sidebars (home hero stays on). */
     galaxyChrome: boolean
+    uiHue: number
+    uiBrightness: number
+    uiSaturation: number
+    buttonHue: number
+    buttonBrightness: number
+    buttonSaturation: number
+    scrollbarHue: number
+    scrollbarBrightness: number
+    scrollbarSaturation: number
+    /** Preset id, or `custom` when hues were hand-tuned. */
+    themeId: string
+    /** User-named themes saved from Live Studio. */
+    savedThemes: ThemePreset[]
   }
   playback: {
     rememberPosition: boolean
@@ -40,7 +62,10 @@ export const DEFAULT_SETTINGS: AppSettings = {
     reduceMotion: false,
     compactDensity: false,
     showButtonTips: true,
-    galaxyChrome: true
+    galaxyChrome: true,
+    ...themeToFlat(DEFAULT_THEME_HUES),
+    themeId: 'umbrix',
+    savedThemes: []
   },
   playback: {
     rememberPosition: true,
@@ -61,6 +86,35 @@ export const DEFAULT_SETTINGS: AppSettings = {
   }
 }
 
+export function themeToFlat(theme: ThemeHues): Pick<
+  AppSettings['appearance'],
+  | 'uiHue'
+  | 'uiBrightness'
+  | 'uiSaturation'
+  | 'buttonHue'
+  | 'buttonBrightness'
+  | 'buttonSaturation'
+  | 'scrollbarHue'
+  | 'scrollbarBrightness'
+  | 'scrollbarSaturation'
+> {
+  return {
+    uiHue: theme.ui.hue,
+    uiBrightness: theme.ui.brightness,
+    uiSaturation: theme.ui.saturation,
+    buttonHue: theme.button.hue,
+    buttonBrightness: theme.button.brightness,
+    buttonSaturation: theme.button.saturation,
+    scrollbarHue: theme.scrollbar.hue,
+    scrollbarBrightness: theme.scrollbar.brightness,
+    scrollbarSaturation: theme.scrollbar.saturation
+  }
+}
+
+export function appearanceTheme(appearance: AppSettings['appearance']): ThemeHues {
+  return appearanceToThemeHues(appearance)
+}
+
 function isSeekStep(value: unknown): value is SeekStepSeconds {
   return value === 5 || value === 10 || value === 15
 }
@@ -70,23 +124,34 @@ function isVolumeStep(value: unknown): value is VolumeStep {
 }
 
 function mergeSettings(raw: Partial<AppSettings> | null | undefined): AppSettings {
-  const appearance = raw?.appearance
+  const appearance = raw?.appearance as Partial<AppSettings['appearance']> & {
+    brightness?: number
+    saturation?: number
+  } | undefined
   const playback = raw?.playback
   const library = raw?.library
   const lyrics = raw?.lyrics
   const warnings = raw?.warnings
 
+  const theme = appearanceToThemeHues(appearance ?? {})
+  const flat = themeToFlat(theme)
+  const savedThemes = sanitizeSavedThemes(appearance?.savedThemes)
+
   return {
     appearance: {
       reduceMotion: !!appearance?.reduceMotion,
       compactDensity: !!appearance?.compactDensity,
-      // Default ON — only off when the user explicitly toggles it off.
       showButtonTips:
         typeof appearance?.showButtonTips === 'boolean'
           ? appearance.showButtonTips
           : DEFAULT_SETTINGS.appearance.showButtonTips,
-      // Default ON — only off when the user explicitly toggles it off.
-      galaxyChrome: appearance?.galaxyChrome !== false
+      galaxyChrome: appearance?.galaxyChrome !== false,
+      ...flat,
+      savedThemes,
+      themeId:
+        typeof appearance?.themeId === 'string' && appearance.themeId
+          ? appearance.themeId
+          : findThemeId(theme, savedThemes)
     },
     playback: {
       rememberPosition: playback?.rememberPosition !== false,
@@ -107,7 +172,6 @@ function mergeSettings(raw: Partial<AppSettings> | null | undefined): AppSetting
       showInStage: lyrics?.showInStage !== false
     },
     warnings: {
-      // Default ON — only off when the user explicitly toggles it off.
       showVisualizerPhotosensitivity:
         typeof warnings?.showVisualizerPhotosensitivity === 'boolean'
           ? warnings.showVisualizerPhotosensitivity

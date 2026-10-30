@@ -1,4 +1,4 @@
-.update-dialog {
+﻿.update-dialog {
   position: fixed;
   inset: 0;
   z-index: 160;
@@ -6,9 +6,19 @@
   place-items: center;
   padding: 24px;
   background:
-    radial-gradient(ellipse at 50% 20%, rgba(123, 77, 184, 0.22), transparent 55%),
+    radial-gradient(ellipse at 50% 20%, color-mix(in srgb, var(--ug-chrome-wash) 22%, transparent), transparent 55%),
     rgba(7, 5, 12, 0.82);
   -webkit-app-region: no-drag;
+}
+
+/* Temporary Settings preview — same panel, sits in the settings pane. */
+.update-dialog--embedded {
+  position: relative;
+  inset: auto;
+  z-index: 1;
+  min-height: 420px;
+  padding: 28px 18px;
+  border-radius: var(--ug-radius-md);
 }
 
 .update-dialog__panel {
@@ -17,7 +27,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(165deg, #221832 0%, #120c1c 48%, #0d0914 100%);
+  background: var(--ug-modal-surface);
   box-shadow:
     0 28px 70px rgba(0, 0, 0, 0.62),
     0 0 0 1px rgba(201, 164, 92, 0.22);
@@ -37,8 +47,8 @@
   isolation: isolate;
   border-bottom: 1px solid var(--ug-border-subtle);
   background:
-    radial-gradient(ellipse at 12% 0%, rgba(123, 77, 184, 0.18), transparent 50%),
-    linear-gradient(180deg, rgba(18, 12, 30, 0.92), rgba(8, 5, 14, 0.96));
+    radial-gradient(ellipse at 12% 0%, color-mix(in srgb, var(--ug-chrome-wash) 18%, transparent), transparent 50%),
+    linear-gradient(180deg, var(--ug-titlebar-top), var(--ug-titlebar-bot));
 }
 
 .update-dialog__head > :not(.galaxy-sky) {
@@ -267,8 +277,8 @@
 .update-dialog__btn--ghost {
   border: 1px solid var(--ug-border-subtle);
   background:
-    radial-gradient(ellipse at 12% 0%, rgba(123, 77, 184, 0.14), transparent 55%),
-    linear-gradient(180deg, rgba(18, 12, 30, 0.92), rgba(8, 5, 14, 0.96));
+    radial-gradient(ellipse at 12% 0%, color-mix(in srgb, var(--ug-chrome-wash) 14%, transparent), transparent 55%),
+    linear-gradient(180deg, var(--ug-titlebar-top), var(--ug-titlebar-bot));
   color: rgba(200, 188, 220, 0.78);
 }
 
@@ -276,15 +286,15 @@
   color: var(--ug-gold-bright);
   border-color: rgba(201, 164, 92, 0.35);
   background:
-    radial-gradient(ellipse at 12% 0%, rgba(123, 77, 184, 0.22), transparent 55%),
+    radial-gradient(ellipse at 12% 0%, color-mix(in srgb, var(--ug-chrome-wash) 22%, transparent), transparent 55%),
     linear-gradient(180deg, rgba(22, 14, 36, 0.96), rgba(10, 6, 18, 0.98));
 }
 
 .update-dialog__btn--solid {
   border: 1px solid rgba(201, 164, 92, 0.35);
   background:
-    radial-gradient(ellipse at 12% 0%, rgba(123, 77, 184, 0.28), transparent 50%),
-    linear-gradient(180deg, rgba(74, 40, 120, 0.95), rgba(28, 14, 52, 0.98));
+    radial-gradient(ellipse at 12% 0%, color-mix(in srgb, var(--ug-chrome-wash) 28%, transparent), transparent 50%),
+    linear-gradient(180deg, color-mix(in srgb, var(--ug-chrome-wash-deep) 70%, var(--ug-modal-top)), var(--ug-modal-bot));
   color: rgba(210, 198, 228, 0.92);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
@@ -293,6 +303,6 @@
   color: var(--ug-gold-bright);
   border-color: rgba(201, 164, 92, 0.5);
   background:
-    radial-gradient(ellipse at 12% 0%, rgba(123, 77, 184, 0.36), transparent 50%),
+    radial-gradient(ellipse at 12% 0%, color-mix(in srgb, var(--ug-chrome-wash) 36%, transparent), transparent 50%),
     linear-gradient(180deg, rgba(88, 48, 140, 0.98), rgba(34, 16, 60, 1));
 }

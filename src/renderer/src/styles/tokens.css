@@ -6,8 +6,52 @@
   --ug-panel: #161022;
   --ug-panel-raised: #1c152c;
   --ug-panel-hover: #241c38;
+  /* Image-less cover / folder art — live-tinted by Appearance UI channel */
+  --ug-cover-top: #2a1848;
+  --ug-cover-bot: #120c1c;
+  --ug-cover-gradient: linear-gradient(145deg, var(--ug-cover-top), var(--ug-cover-bot));
+  /* Stock Umbrix chrome — match 0.1.11. Themes override via applyAppearanceHues. */
+  --ug-chrome-wash: #7b4db8;
+  --ug-chrome-wash-deep: #4a2878;
+  --ug-shell-top: #120c1c;
+  --ug-shell-mid: #0c0814;
+  --ug-shell-bot: #080610;
+  --ug-right-shell-top: #100c1a;
+  --ug-right-shell-bot: #090712;
+  --ug-center-top: #100b1a;
+  --ug-center-mid: #0a070f;
+  --ug-titlebar-top: rgba(18, 12, 30, 0.92);
+  --ug-titlebar-bot: rgba(8, 5, 14, 0.96);
+  --ug-footer-top: rgba(16, 10, 28, 0.94);
+  --ug-footer-bot: rgba(8, 5, 14, 0.98);
+  --ug-hero-base: linear-gradient(165deg, #1b1130 0%, #10091c 42%, #080610 100%);
+  --ug-nebula-a: rgba(95, 55, 170, 0.22);
+  --ug-nebula-b: rgba(55, 30, 105, 0.2);
+  --ug-nebula-c: rgba(120, 60, 170, 0.12);
+  /* Modal / menu shells — themed with UI channel */
+  --ug-modal-top: #221832;
+  --ug-modal-mid: #120c1c;
+  --ug-modal-bot: #0d0914;
+  --ug-modal-surface: linear-gradient(
+    165deg,
+    var(--ug-modal-top) 0%,
+    var(--ug-modal-mid) 48%,
+    var(--ug-modal-bot) 100%
+  );
+  --ug-menu-top: #1d162c;
+  --ug-menu-bot: #120c1c;
 
-  /* Accents */
+  /* Accents — hues are live-editable from Appearance editor */
+  --ug-ui-hue: 271;
+  --ug-button-hue: 271;
+  --ug-scrollbar-hue: 271;
+  /* Deg offset from stock purple PNGs (271°) — used by hue-rotate on image plates */
+  --ug-button-hue-shift: 0deg;
+  --ug-scrollbar-hue-shift: 0deg;
+  --ug-appearance-brightness: 1;
+  --ug-appearance-saturation: 1;
+  --ug-button-tone-filter: hue-rotate(0deg) saturate(1) brightness(1);
+  --ug-scrollbar-tone-filter: hue-rotate(0deg) saturate(1) brightness(1);
   --ug-gold: #c9a45c;
   --ug-gold-bright: #e8c878;
   --ug-gold-warm: #9a6b2e;
@@ -16,6 +60,14 @@
   --ug-amethyst-bright: #a56de8;
   --ug-amethyst-deep: #4a2878;
   --ug-glow: rgba(165, 109, 232, 0.14);
+  /* Stock CTA purple — exact 0.1.11 hero button stops */
+  --ug-button-fill-top: #6b3fb0;
+  --ug-button-fill-mid: #3d1f78;
+  --ug-button-fill-bot: #1a0e36;
+  --ug-button-glow: rgba(123, 77, 184, 0.28);
+  --ug-scrollbar-fill: #4a2878;
+  --ug-scrollbar-thumb: rgba(165, 109, 232, 0.45);
+  --ug-scrollbar-thumb-hover: rgba(165, 109, 232, 0.65);
   /* Active toggle controls (shuffle, repeat, open panels) — saturated, no glow */
   --ug-control-active: #2fd98a;
   --ug-control-active-bright: #1aff8c;

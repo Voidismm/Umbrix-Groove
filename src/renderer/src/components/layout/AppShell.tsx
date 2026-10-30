@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { LibraryProvider } from '@renderer/features/library'
 import { PlaybackProvider, usePlayback } from '@renderer/features/player'
 import { PlaylistProvider } from '@renderer/features/playlists'
 import { SettingsProvider } from '@renderer/features/settings'
+import { AppearanceEditor } from '../settings/AppearanceEditor'
 import { SettingsModal } from '../settings/SettingsModal'
 import { GrooveTipHost } from '../ui/GrooveTipHost'
 import { ChangelogDialogHost } from '../ui/ChangelogDialog'
@@ -71,6 +73,7 @@ function ShellFrame(): React.JSX.Element {
   const [leftCollapsed, setLeftCollapsed] = useState(initialShell.leftCollapsed)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [settingsFocus, setSettingsFocus] = useState<SettingsFocusTarget | null>(null)
+  const [appearanceEditorOpen, setAppearanceEditorOpen] = useState(false)
   const [rightRevealTick, setRightRevealTick] = useState(0)
   const [leftWidth, setLeftWidth] = useState(initialShell.leftWidth)
   const [rightWidth, setRightWidth] = useState(initialShell.rightWidth)
@@ -85,6 +88,8 @@ function ShellFrame(): React.JSX.Element {
   )
   const dragRef = useRef<{ side: DragSide; startX: number; startW: number } | null>(null)
   const draggingRef = useRef(false)
+  /** Left gutter dragged past snap — collapse only on release so expanded chrome is not crushed mid-drag. */
+  const leftSnapCollapseRef = useRef(false)
   const rightOpenRef = useRef(initialShell.rightOpen)
   const liveRef = useRef({
     leftWidth: initialShell.leftWidth,
@@ -202,34 +207,43 @@ function ShellFrame(): React.JSX.Element {
 
       const live = liveRef.current
       const startW = side === 'left' ? live.leftWidth : live.rightWidth
+      const target = event.currentTarget
 
       dragRef.current = { side, startX: event.clientX, startW }
       draggingRef.current = true
-      setShellResizing(true)
-      shellRef.current?.classList.add('app-shell--resizing')
-      event.currentTarget.setPointerCapture(event.pointerId)
-      paintColumns()
+      leftSnapCollapseRef.current = false
+      // Defer heavy resize mode until the pointer actually moves — a click must not
+      // strip motion / contain and flash the chrome.
+      let resizeModeOn = false
+      target.setPointerCapture(event.pointerId)
+
+      const armResizeMode = (): void => {
+        if (resizeModeOn) return
+        resizeModeOn = true
+        setShellResizing(true)
+        shellRef.current?.classList.add('app-shell--resizing')
+      }
 
       const onMove = (moveEvent: PointerEvent): void => {
         const drag = dragRef.current
         if (!drag) return
         const delta = moveEvent.clientX - drag.startX
+        if (!resizeModeOn && Math.abs(delta) < 3) return
+        armResizeMode()
         const nextLive = liveRef.current
 
         if (drag.side === 'left') {
           const next = drag.startW + delta
           if (next < LEFT_SNAP) {
+            // Keep expanded chrome at LEFT_MIN while dragging — collapse on pointer up.
+            leftSnapCollapseRef.current = true
             leftExpandedRef.current = Math.max(LEFT_MIN, drag.startW)
-            nextLive.leftWidth = leftExpandedRef.current
-            nextLive.leftCollapsed = true
-            dragRef.current = {
-              side: 'left',
-              startX: moveEvent.clientX,
-              startW: LEFT_COLLAPSED
-            }
+            nextLive.leftWidth = LEFT_MIN
+            nextLive.leftCollapsed = false
             schedulePaint()
             return
           }
+          leftSnapCollapseRef.current = false
           nextLive.leftCollapsed = false
           const width = clamp(next, LEFT_MIN, LEFT_MAX)
           nextLive.leftWidth = width
@@ -249,14 +263,27 @@ function ShellFrame(): React.JSX.Element {
         window.removeEventListener('pointerup', onUp)
         window.removeEventListener('pointercancel', onUp)
         const nextLive = liveRef.current
+        const snapCollapse = leftSnapCollapseRef.current
         dragRef.current = null
         draggingRef.current = false
-        shellRef.current?.classList.remove('app-shell--resizing')
-        setShellResizing(false)
+        leftSnapCollapseRef.current = false
         // One React sync after the gesture — never during it.
-        setLeftWidth(nextLive.leftWidth)
-        setRightWidth(nextLive.rightWidth)
-        setLeftCollapsed(nextLive.leftCollapsed)
+        if (snapCollapse) {
+          nextLive.leftCollapsed = true
+          nextLive.leftWidth = leftExpandedRef.current
+        }
+        // Commit collapsed chrome + column width before clearing resize mode so
+        // filters / contain do not restore onto a half-width expanded rail.
+        flushSync(() => {
+          setLeftWidth(nextLive.leftWidth)
+          setRightWidth(nextLive.rightWidth)
+          setLeftCollapsed(nextLive.leftCollapsed)
+        })
+        paintColumns()
+        if (resizeModeOn) {
+          shellRef.current?.classList.remove('app-shell--resizing')
+          setShellResizing(false)
+        }
       }
 
       window.addEventListener('pointermove', onMove)
@@ -374,6 +401,15 @@ function ShellFrame(): React.JSX.Element {
           setSettingsFocus(null)
         }}
         onFocusHandled={() => setSettingsFocus(null)}
+        onEditAppearance={() => {
+          setSettingsOpen(false)
+          setSettingsFocus(null)
+          setAppearanceEditorOpen(true)
+        }}
+      />
+      <AppearanceEditor
+        open={appearanceEditorOpen}
+        onClose={() => setAppearanceEditorOpen(false)}
       />
       <UpdateDialogHost />
       <ChangelogDialogHost />

@@ -13,8 +13,8 @@
   overflow: hidden;
   isolation: isolate;
   background:
-    radial-gradient(ellipse at 20% 0%, rgba(123, 77, 184, 0.16), transparent 52%),
-    linear-gradient(180deg, rgba(16, 10, 28, 0.94), rgba(8, 5, 14, 0.98));
+    radial-gradient(ellipse at 20% 0%, color-mix(in srgb, var(--ug-chrome-wash) 16%, transparent), transparent 52%),
+    linear-gradient(180deg, var(--ug-footer-top), var(--ug-footer-bot));
   z-index: 20;
   -webkit-app-region: drag;
   transition:
@@ -188,7 +188,7 @@ html[data-reduce-motion='true'] .player-footer {
   border-radius: 8px;
   border: 1px solid var(--ug-border);
   color: var(--ug-gold-bright);
-  background: linear-gradient(145deg, #2a1848, #120c1c);
+  background: var(--ug-cover-gradient);
   flex-shrink: 0;
   overflow: hidden;
 }
@@ -254,7 +254,33 @@ html[data-reduce-motion='true'] .player-footer {
   border-radius: 50%;
   color: #d2c6e4;
   overflow: hidden;
-  /* Darker purple fill — image + deep tint, clipped inside gold rim */
+  /* Gold rim stays on the host; purple plate lives on ::before so Buttons hue can retint it. */
+  background-color: transparent;
+  background-image: linear-gradient(
+    145deg,
+    #f6c86a 0%,
+    #e8a84a 22%,
+    #c47a28 48%,
+    #8a4e14 68%,
+    #d4923a 88%,
+    #a86220 100%
+  );
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  background-size: auto;
+  background-origin: border-box;
+  background-clip: border-box;
+  border: 1.5px solid transparent;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.32);
+}
+
+.player-footer__icon::before,
+.player-footer__controls button:not(.player-footer__play)::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: 0;
   background-color: #2a1548;
   background-image:
     linear-gradient(
@@ -262,27 +288,16 @@ html[data-reduce-motion='true'] .player-footer {
       rgba(72, 18, 130, 0.34) 0%,
       rgba(28, 6, 58, 0.46) 100%
     ),
-    url('../../assets/buttons/circle button .png'),
-    linear-gradient(
-      145deg,
-      #f6c86a 0%,
-      #e8a84a 22%,
-      #c47a28 48%,
-      #8a4e14 68%,
-      #d4923a 88%,
-      #a86220 100%
-    );
-  background-repeat: no-repeat, no-repeat, no-repeat;
-  background-position: 0 0, center, 0 0;
-  background-size: 100% 100%, 118% 118%, auto;
-  background-origin: border-box, border-box, border-box;
-  background-clip: padding-box, padding-box, border-box;
-  border: 1.5px solid transparent;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.32);
+    url('../../assets/buttons/circle button .png');
+  background-repeat: no-repeat, no-repeat;
+  background-position: 0 0, center;
+  background-size: 100% 100%, 118% 118%;
+  background-origin: border-box, border-box;
+  background-clip: padding-box, padding-box;
+  filter: var(--ug-button-tone-filter, hue-rotate(var(--ug-button-hue-shift, 0deg)));
+  pointer-events: none;
 }
 
-.player-footer__icon::before,
-.player-footer__controls button:not(.player-footer__play)::before,
 .player-footer__icon::after,
 .player-footer__controls button:not(.player-footer__play)::after {
   content: none;
@@ -300,26 +315,25 @@ html[data-reduce-motion='true'] .player-footer {
 .player-footer__icon:hover:not(:disabled),
 .player-footer__controls button:not(.player-footer__play):hover:not(:disabled) {
   color: #d8cee4;
+  background-image: linear-gradient(
+    145deg,
+    #f8d078 0%,
+    #efb050 24%,
+    #d48830 50%,
+    #b06820 72%,
+    #e8a84a 100%
+  );
+}
+
+.player-footer__icon:hover:not(:disabled)::before,
+.player-footer__controls button:not(.player-footer__play):hover:not(:disabled)::before {
   background-image:
     linear-gradient(
       160deg,
       rgba(40, 16, 72, 0.26) 0%,
       rgba(18, 6, 40, 0.38) 100%
     ),
-    url('../../assets/buttons/circle button .png'),
-    linear-gradient(
-      145deg,
-      #f8d078 0%,
-      #efb050 24%,
-      #d48830 50%,
-      #b06820 72%,
-      #e8a84a 100%
-    );
-  background-repeat: no-repeat, no-repeat, no-repeat;
-  background-position: 0 0, center, 0 0;
-  background-size: 100% 100%, 118% 118%, auto;
-  background-origin: border-box, border-box, border-box;
-  background-clip: padding-box, padding-box, border-box;
+    url('../../assets/buttons/circle button .png');
 }
 
 .player-footer__icon:disabled {
@@ -384,15 +398,16 @@ html[data-reduce-motion='true'] .player-footer {
 }
 
 .player-footer__seek-rail input:not(:disabled),
-.player-footer__volume .ug-slider {
+.player-footer__volume-rail input:not(:disabled) {
   cursor: pointer;
 }
 
 /*
-  Seek rail: track paint + custom knob (native thumbs shimmer gold borders in Blink).
-  Volume still uses a native thumb.
+  Seek / volume rails: gold rim on the host, PNG plate on ::before so Buttons hue
+  never eats the gold. Custom knobs avoid Blink shimmering native thumbs.
 */
-.player-footer__seek-rail {
+.player-footer__seek-rail,
+.player-footer__volume-rail {
   --ug-range: 0%;
   position: relative;
   width: 100%;
@@ -401,7 +416,14 @@ html[data-reduce-motion='true'] .player-footer {
   align-items: center;
 }
 
-.player-footer__seek-rail::before {
+.player-footer__volume-rail {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Gold rim underneath — plate sits on top and leaves this ring visible. */
+.player-footer__seek-rail::after,
+.player-footer__volume-rail::after {
   content: '';
   position: absolute;
   left: 0;
@@ -410,9 +432,40 @@ html[data-reduce-motion='true'] .player-footer {
   height: 10px;
   transform: translateY(-50%);
   border-radius: 999px;
+  box-sizing: border-box;
+  border: 1.5px solid transparent;
+  background-color: transparent;
+  background-image: linear-gradient(
+    145deg,
+    #f6c86a 0%,
+    #e8a84a 22%,
+    #c47a28 48%,
+    #8a4e14 68%,
+    #d4923a 88%,
+    #a86220 100%
+  );
+  background-repeat: no-repeat;
+  background-origin: border-box;
+  background-clip: border-box;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Tinted plate on top of gold, inset so the rim shows */
+.player-footer__seek-rail::before,
+.player-footer__volume-rail::before {
+  content: '';
+  position: absolute;
+  left: 1.5px;
+  right: 1.5px;
+  top: 50%;
+  height: 7px;
+  transform: translateY(-50%);
+  border-radius: 999px;
   overflow: hidden;
   border: none;
-  background-color: #4a2080;
+  background-color: var(--ug-button-fill-mid);
   background-image:
     linear-gradient(
       to right,
@@ -429,9 +482,11 @@ html[data-reduce-motion='true'] .player-footer {
     url('../../assets/buttons/wide button round.png');
   background-repeat: no-repeat, no-repeat, no-repeat;
   background-position: 0 0, 0 0, center;
-  background-size: 100% 100%, 100% 100%, 100% 100%;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  /* Oversize the PNG so its baked gold rim is cropped; CSS gold lives on ::after. */
+  background-size: 100% 100%, 100% 100%, 118% 160%;
+  filter: var(--ug-button-tone-filter, hue-rotate(var(--ug-button-hue-shift, 0deg)));
   pointer-events: none;
+  z-index: 1;
 }
 
 .player-footer__seek-rail.is-disabled::before {
@@ -485,7 +540,8 @@ html[data-reduce-motion='true'] .player-footer {
   box-shadow: none;
 }
 
-.player-footer__seek-knob {
+.player-footer__seek-knob,
+.player-footer__volume-knob {
   position: absolute;
   top: 50%;
   left: var(--ug-range);
@@ -496,35 +552,100 @@ html[data-reduce-motion='true'] .player-footer {
   border: 1.5px solid transparent;
   border-radius: 50%;
   pointer-events: none;
-  background-color: #4a2878;
-  /* Same thin gold rim as the footer buttons — not a solid outer ring. */
-  background-image:
-    url('../../assets/buttons/circle button .png'),
-    linear-gradient(
-      145deg,
-      #f6c86a 0%,
-      #e8a84a 22%,
-      #c47a28 48%,
-      #8a4e14 68%,
-      #d4923a 88%,
-      #a86220 100%
-    );
-  background-repeat: no-repeat, no-repeat;
-  background-position: center, 0 0;
-  background-size: cover, auto;
-  background-origin: border-box, border-box;
-  background-clip: padding-box, border-box;
+  background-color: transparent;
+  background-image: linear-gradient(
+    145deg,
+    #f6c86a 0%,
+    #e8a84a 22%,
+    #c47a28 48%,
+    #8a4e14 68%,
+    #d4923a 88%,
+    #a86220 100%
+  );
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  background-size: auto;
+  background-origin: border-box;
+  background-clip: border-box;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
   transform: translate3d(-50%, -50%, 0);
+  overflow: hidden;
+}
+
+.player-footer__seek-knob::before,
+.player-footer__volume-knob::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-color: #4a2878;
+  background-image: url('../../assets/buttons/circle button .png');
+  background-repeat: no-repeat;
+  background-position: center;
+  /* Crop baked PNG gold; host owns the real gold rim. */
+  background-size: 118% 118%;
+  filter: var(--ug-button-tone-filter, hue-rotate(var(--ug-button-hue-shift, 0deg)));
 }
 
 .player-footer__seek-rail.is-disabled .player-footer__seek-knob {
   opacity: 0.55;
 }
 
-.player-footer__volume .ug-slider {
-  flex: 1;
-  min-width: 0;
+.player-footer__volume-rail input[type='range'],
+.player-footer__volume .ug-slider--bare {
+  -webkit-appearance: none;
+  appearance: none;
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 14px;
+  margin: 0;
+  background: transparent;
+  accent-color: transparent;
+  cursor: pointer;
+}
+
+.player-footer__volume-rail input[type='range']::-webkit-slider-runnable-track,
+.player-footer__volume .ug-slider--bare::-webkit-slider-runnable-track {
+  height: 10px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  filter: none;
+}
+
+.player-footer__volume-rail input[type='range']::-moz-range-track,
+.player-footer__volume .ug-slider--bare::-moz-range-track {
+  height: 10px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  filter: none;
+}
+
+.player-footer__volume-rail input[type='range']::-webkit-slider-thumb,
+.player-footer__volume .ug-slider--bare::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -2px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: none;
+  filter: none;
+}
+
+.player-footer__volume-rail input[type='range']::-moz-range-thumb,
+.player-footer__volume .ug-slider--bare::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: none;
+  filter: none;
 }
 
 .player-footer__play {
@@ -544,7 +665,32 @@ html[data-reduce-motion='true'] .player-footer {
   border-radius: 50%;
   color: #d2c6e4 !important;
   overflow: hidden;
-  /* Larger asset orb + dark tint + gold rim */
+  background-color: transparent;
+  background-image: linear-gradient(
+    145deg,
+    #f6c86a 0%,
+    #e8a84a 22%,
+    #c47a28 48%,
+    #8a4e14 68%,
+    #d4923a 88%,
+    #a86220 100%
+  );
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  background-size: auto;
+  background-origin: border-box;
+  background-clip: border-box;
+  border: 1.5px solid transparent;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.32);
+  opacity: 1 !important;
+}
+
+.player-footer__play::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: 0;
   background-color: #2a1548;
   background-image:
     linear-gradient(
@@ -552,27 +698,16 @@ html[data-reduce-motion='true'] .player-footer {
       rgba(72, 18, 130, 0.34) 0%,
       rgba(28, 6, 58, 0.46) 100%
     ),
-    url('../../assets/buttons/circle button .png'),
-    linear-gradient(
-      145deg,
-      #f6c86a 0%,
-      #e8a84a 22%,
-      #c47a28 48%,
-      #8a4e14 68%,
-      #d4923a 88%,
-      #a86220 100%
-    );
-  background-repeat: no-repeat, no-repeat, no-repeat;
-  background-position: 0 0, center, 0 0;
-  background-size: 100% 100%, 118% 118%, auto;
-  background-origin: border-box, border-box, border-box;
-  background-clip: padding-box, padding-box, border-box;
-  border: 1.5px solid transparent;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.32);
-  opacity: 1 !important;
+    url('../../assets/buttons/circle button .png');
+  background-repeat: no-repeat, no-repeat;
+  background-position: 0 0, center;
+  background-size: 100% 100%, 118% 118%;
+  background-origin: border-box, border-box;
+  background-clip: padding-box, padding-box;
+  filter: var(--ug-button-tone-filter, hue-rotate(var(--ug-button-hue-shift, 0deg)));
+  pointer-events: none;
 }
 
-.player-footer__play::before,
 .player-footer__play::after {
   content: none;
 }
@@ -584,26 +719,24 @@ html[data-reduce-motion='true'] .player-footer {
 
 .player-footer__play:hover:not(:disabled) {
   color: #d8cee4 !important;
+  background-image: linear-gradient(
+    145deg,
+    #f8d078 0%,
+    #efb050 24%,
+    #d48830 50%,
+    #b06820 72%,
+    #e8a84a 100%
+  );
+}
+
+.player-footer__play:hover:not(:disabled)::before {
   background-image:
     linear-gradient(
       160deg,
       rgba(40, 16, 72, 0.26) 0%,
       rgba(18, 6, 40, 0.38) 100%
     ),
-    url('../../assets/buttons/circle button .png'),
-    linear-gradient(
-      145deg,
-      #f8d078 0%,
-      #efb050 24%,
-      #d48830 50%,
-      #b06820 72%,
-      #e8a84a 100%
-    );
-  background-repeat: no-repeat, no-repeat, no-repeat;
-  background-position: 0 0, center, 0 0;
-  background-size: 100% 100%, 118% 118%, auto;
-  background-origin: border-box, border-box, border-box;
-  background-clip: padding-box, padding-box, border-box;
+    url('../../assets/buttons/circle button .png');
 }
 
 .player-footer__play:disabled {
@@ -639,7 +772,7 @@ html[data-reduce-motion='true'] .player-footer {
 }
 
 .player-footer__seek-rail input[type='range'],
-.player-footer__volume .ug-slider {
+.player-footer__volume-rail input[type='range'] {
   width: 100%;
 }
 

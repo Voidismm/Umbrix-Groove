@@ -218,7 +218,7 @@ html[data-reduce-motion='true'] .visualizer-stage__rail {
 }
 
 .visualizer-stage__switch.is-on {
-  background: rgba(123, 77, 184, 0.55);
+  background: color-mix(in srgb, var(--ug-chrome-wash) 55%, transparent);
   border-color: rgba(201, 164, 92, 0.55);
 }
 

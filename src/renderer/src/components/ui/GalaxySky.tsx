@@ -90,29 +90,29 @@ function buildField(variant: 'hero' | 'chrome', seed: number): FieldStar[] {
   }
 
   return [
-    ...makeLayer(90, seed + 19, {
-      rMin: 0.16,
-      rMax: 0.42,
-      oMin: 0.22,
-      oMax: 0.7,
+    ...makeLayer(160, seed + 19, {
+      rMin: 0.14,
+      rMax: 0.4,
+      oMin: 0.2,
+      oMax: 0.72,
       goldChance: 0.08,
-      twinkleChance: 0.1
+      twinkleChance: 0.12
     }),
-    ...makeLayer(28, seed + 53, {
-      rMin: 0.35,
-      rMax: 0.8,
-      oMin: 0.4,
-      oMax: 0.88,
+    ...makeLayer(48, seed + 53, {
+      rMin: 0.32,
+      rMax: 0.78,
+      oMin: 0.38,
+      oMax: 0.9,
       goldChance: 0.14,
-      twinkleChance: 0.32
+      twinkleChance: 0.34
     }),
-    ...makeLayer(12, seed + 91, {
+    ...makeLayer(20, seed + 91, {
       rMin: 0.55,
-      rMax: 1.35,
+      rMax: 1.4,
       oMin: 0.55,
       oMax: 1,
-      goldChance: 0.2,
-      twinkleChance: 0.5
+      goldChance: 0.22,
+      twinkleChance: 0.52
     })
   ]
 }
@@ -120,7 +120,7 @@ function buildField(variant: 'hero' | 'chrome', seed: number): FieldStar[] {
 const fieldCache = new Map<string, FieldStar[]>()
 
 function getField(variant: 'hero' | 'chrome', seed: number): FieldStar[] {
-  const key = `${variant}:${seed}`
+  const key = `${variant}:${seed}:dense`
   let field = fieldCache.get(key)
   if (!field) {
     field = buildField(variant, seed)

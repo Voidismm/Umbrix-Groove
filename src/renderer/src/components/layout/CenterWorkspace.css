@@ -2,8 +2,8 @@
   min-width: 0;
   height: 100%;
   background:
-    radial-gradient(ellipse at 50% -10%, rgba(123, 77, 184, 0.18), transparent 50%),
-    linear-gradient(180deg, #100b1a 0%, #0a070f 40%, #07050c 100%);
+    radial-gradient(ellipse at 50% -10%, color-mix(in srgb, var(--ug-chrome-wash) 18%, transparent), transparent 50%),
+    linear-gradient(180deg, var(--ug-center-top) 0%, var(--ug-center-mid) 40%, var(--ug-void) 100%);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -56,10 +56,10 @@
   overflow: hidden;
   isolation: isolate;
   background:
-    radial-gradient(ellipse at 12% 18%, rgba(130, 80, 195, 0.25), transparent 48%),
+    radial-gradient(ellipse at 12% 18%, color-mix(in srgb, var(--ug-chrome-wash) 25%, transparent), transparent 48%),
     radial-gradient(ellipse at 88% 12%, rgba(185, 145, 75, 0.11), transparent 42%),
-    radial-gradient(ellipse at 70% 88%, rgba(58, 28, 100, 0.3), transparent 50%),
-    linear-gradient(165deg, #1b1130 0%, #10091c 42%, #080610 100%);
+    radial-gradient(ellipse at 70% 88%, color-mix(in srgb, var(--ug-chrome-wash-deep) 30%, transparent), transparent 50%),
+    var(--ug-hero-base);
   box-shadow: inset 0 1px 0 rgba(255, 248, 232, 0.045);
 }
 
@@ -83,7 +83,7 @@
   left: -8%;
   width: 42%;
   height: 70%;
-  background: radial-gradient(circle, rgba(130, 80, 210, 0.3), transparent 68%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--ug-chrome-wash) 30%, transparent), transparent 68%);
   animation: hero-drift-a 18s ease-in-out infinite alternate;
 }
 
@@ -101,7 +101,7 @@
   left: 42%;
   width: 22%;
   height: 36%;
-  background: radial-gradient(circle, rgba(90, 52, 145, 0.24), transparent 72%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--ug-chrome-wash-deep) 24%, transparent), transparent 72%);
   animation: hero-drift-c 14s ease-in-out infinite alternate;
 }
 
@@ -115,7 +115,7 @@
   border-radius: 50%;
   transform: translate(-30%, -52%);
   box-shadow:
-    inset 0 0 40px rgba(123, 77, 184, 0.08),
+    inset 0 0 40px color-mix(in srgb, var(--ug-chrome-wash) 8%, transparent),
     0 0 60px rgba(201, 164, 92, 0.05);
   animation: hero-ring 28s linear infinite;
 }
@@ -225,18 +225,27 @@
   border-radius: var(--ug-radius-pill);
   border: 1px solid rgba(232, 200, 120, 0.42);
   background:
-    radial-gradient(ellipse at 18% 0%, rgba(180, 140, 255, 0.42), transparent 52%),
+    radial-gradient(
+      ellipse at 18% 0%,
+      color-mix(in srgb, var(--ug-button-fill-top) 55%, rgba(255, 255, 255, 0.35)),
+      transparent 52%
+    ),
     radial-gradient(ellipse at 88% 120%, rgba(201, 164, 92, 0.28), transparent 48%),
-    linear-gradient(165deg, #6b3fb0 0%, #3d1f78 48%, #1a0e36 100%);
+    linear-gradient(
+      165deg,
+      var(--ug-button-fill-top) 0%,
+      var(--ug-button-fill-mid) 48%,
+      var(--ug-button-fill-bot) 100%
+    );
   color: rgba(210, 198, 228, 0.92);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-shadow: 0 1px 0 rgba(8, 4, 18, 0.55);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 0 0 1px rgba(123, 77, 184, 0.28),
+    0 0 0 1px var(--ug-button-glow),
     0 8px 24px rgba(40, 12, 72, 0.45),
-    0 0 28px rgba(123, 77, 184, 0.22);
+    0 0 28px var(--ug-button-glow);
   transition:
     transform var(--ug-duration) var(--ug-ease),
     box-shadow var(--ug-duration) var(--ug-ease),
@@ -294,23 +303,31 @@
   filter: saturate(1.08);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    0 0 0 1px rgba(165, 109, 232, 0.4),
+    0 0 0 1px color-mix(in srgb, var(--ug-button-fill-top) 55%, transparent),
     0 12px 30px rgba(40, 12, 72, 0.5),
-    0 0 36px rgba(123, 77, 184, 0.35);
+    0 0 36px var(--ug-button-glow);
 }
 
 .hero__cta--ghost {
   border-color: rgba(201, 164, 92, 0.38);
   background:
-    radial-gradient(ellipse at 22% 0%, rgba(123, 77, 184, 0.38), transparent 55%),
+    radial-gradient(
+      ellipse at 22% 0%,
+      color-mix(in srgb, var(--ug-button-fill-top) 42%, transparent),
+      transparent 55%
+    ),
     radial-gradient(ellipse at 90% 110%, rgba(201, 164, 92, 0.18), transparent 50%),
-    linear-gradient(165deg, rgba(42, 28, 72, 0.92) 0%, rgba(16, 10, 30, 0.88) 100%);
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--ug-button-fill-mid) 48%, rgba(16, 10, 30, 0.92)) 0%,
+      color-mix(in srgb, var(--ug-button-fill-bot) 35%, rgba(16, 10, 30, 0.9)) 100%
+    );
   color: rgba(220, 208, 238, 0.9);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 0 0 1px rgba(123, 77, 184, 0.22),
+    0 0 0 1px color-mix(in srgb, var(--ug-button-glow) 80%, transparent),
     0 6px 18px rgba(0, 0, 0, 0.32),
-    0 0 20px rgba(123, 77, 184, 0.16);
+    0 0 20px var(--ug-button-glow);
 }
 
 .hero__cta--ghost:hover:not(:disabled) {
@@ -318,9 +335,9 @@
   filter: saturate(1.06);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 0 0 1px rgba(165, 109, 232, 0.32),
+    0 0 0 1px color-mix(in srgb, var(--ug-button-fill-top) 45%, transparent),
     0 10px 24px rgba(0, 0, 0, 0.38),
-    0 0 28px rgba(123, 77, 184, 0.28);
+    0 0 28px var(--ug-button-glow);
 }
 
 .hero__cta:disabled {
@@ -378,10 +395,13 @@
   padding: 18px 18px 16px;
   text-align: left;
   color: var(--ug-text);
-  border: 1px solid rgba(201, 164, 92, 0.22);
+  border: 1px solid color-mix(in srgb, var(--ug-button-fill-top) 28%, rgba(201, 164, 92, 0.22));
   border-radius: var(--ug-radius-md);
-  background:
-    linear-gradient(160deg, rgba(28, 18, 48, 0.72), rgba(10, 6, 18, 0.55));
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--ug-button-fill-mid) 62%, rgba(10, 6, 18, 0.72)),
+    color-mix(in srgb, var(--ug-button-fill-bot) 55%, rgba(8, 4, 16, 0.55))
+  );
   box-shadow:
     inset 0 1px 0 rgba(255, 248, 232, 0.06),
     0 12px 28px rgba(0, 0, 0, 0.25);
@@ -482,7 +502,11 @@ html[data-reduce-motion='true'] .hero__cta::after {
   border: 1px solid rgba(201, 164, 92, 0.16);
   border-radius: var(--ug-radius-md);
   background:
-    linear-gradient(180deg, rgba(28, 20, 44, 0.92), rgba(12, 8, 20, 0.88));
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ug-panel-raised) 92%, transparent),
+      color-mix(in srgb, var(--ug-panel) 88%, transparent)
+    );
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
@@ -511,7 +535,11 @@ html[data-reduce-motion='true'] .hero__cta::after {
   color: var(--ug-gold-bright);
   border-color: rgba(201, 164, 92, 0.32);
   background:
-    linear-gradient(180deg, rgba(123, 77, 184, 0.34), rgba(74, 40, 120, 0.22)),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ug-button-fill-top) 55%, transparent),
+      color-mix(in srgb, var(--ug-button-fill-mid) 40%, transparent)
+    ),
     rgba(10, 6, 18, 0.65);
 }
 
@@ -559,9 +587,9 @@ html[data-reduce-motion='true'] .hero__cta::after {
   gap: 12px;
   width: 100%;
   padding: 8px 12px 8px 10px;
-  border: 1px solid rgba(201, 164, 92, 0.12);
+  border: 1px solid color-mix(in srgb, var(--ug-button-fill-top) 22%, rgba(201, 164, 92, 0.12));
   border-radius: var(--ug-radius-md);
-  background: rgba(18, 12, 28, 0.45);
+  background: color-mix(in srgb, var(--ug-button-fill-bot) 58%, rgba(10, 6, 18, 0.72));
   color: inherit;
   text-align: left;
   transition:
@@ -574,8 +602,8 @@ html[data-reduce-motion='true'] .hero__cta::after {
 }
 
 .home-shelf__card:hover {
-  background: rgba(36, 24, 56, 0.72);
-  border-color: rgba(201, 164, 92, 0.28);
+  background: color-mix(in srgb, var(--ug-button-fill-mid) 48%, rgba(12, 8, 22, 0.78));
+  border-color: color-mix(in srgb, var(--ug-button-fill-top) 32%, rgba(201, 164, 92, 0.28));
 }
 
 .home-shelf__rank {
@@ -705,7 +733,7 @@ html[data-reduce-motion='true'] .hero__cta::after {
 
 .mix-card__art {
   aspect-ratio: 1;
-  background: #120c1c;
+  background: linear-gradient(145deg, var(--ug-button-fill-mid), var(--ug-button-fill-bot));
 }
 
 .mix-card__art img {
@@ -726,7 +754,8 @@ html[data-reduce-motion='true'] .hero__cta::after {
 .mix-card__art--fallback {
   display: grid;
   place-items: center;
-  color: #d2c6e4;
+  color: var(--ug-text);
+  background: linear-gradient(145deg, var(--ug-button-fill-top), var(--ug-button-fill-bot));
 }
 
 .mix-card__accent {
@@ -989,16 +1018,28 @@ html[data-reduce-motion='true'] .hero__cta::after {
 }
 
 .cover--violet {
-  background: linear-gradient(145deg, #5b2d8f, #1b1030);
+  background: linear-gradient(145deg, var(--ug-button-fill-top), var(--ug-button-fill-bot));
 }
 .cover--indigo {
-  background: linear-gradient(145deg, #3a3d8f, #12162b);
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--ug-button-fill-top) 70%, #3a3d8f),
+    color-mix(in srgb, var(--ug-button-fill-bot) 75%, #12162b)
+  );
 }
 .cover--plum {
-  background: linear-gradient(145deg, #6e2a5d, #1a0d18);
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--ug-button-fill-top) 65%, #6e2a5d),
+    color-mix(in srgb, var(--ug-button-fill-bot) 75%, #1a0d18)
+  );
 }
 .cover--dusk {
-  background: linear-gradient(145deg, #4a3878, #151022);
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--ug-button-fill-mid) 80%, #4a3878),
+    var(--ug-button-fill-bot)
+  );
 }
 .cover--night {
   background: linear-gradient(145deg, #24305c, #0c101c);
@@ -1037,7 +1078,11 @@ html[data-reduce-motion='true'] .hero__cta::after {
   align-items: center;
   gap: 14px;
   padding: 14px;
-  background: linear-gradient(135deg, rgba(28, 21, 44, 0.95), rgba(18, 12, 28, 0.9));
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ug-button-fill-mid) 72%, rgba(12, 8, 22, 0.95)),
+    color-mix(in srgb, var(--ug-button-fill-bot) 80%, rgba(10, 6, 18, 0.9))
+  );
   border-radius: var(--ug-radius-md);
   transition:
     transform var(--ug-duration) var(--ug-ease),
@@ -1056,7 +1101,7 @@ html[data-reduce-motion='true'] .hero__cta::after {
   border: 1px solid var(--ug-border);
   background:
     radial-gradient(circle at 30% 30%, rgba(232, 200, 120, 0.55), transparent 50%),
-    radial-gradient(circle at 70% 70%, rgba(165, 109, 232, 0.55), #1a1028);
+    radial-gradient(circle at 70% 70%, color-mix(in srgb, var(--ug-amethyst-bright) 55%, transparent), #1a1028);
   box-shadow: 0 0 8px var(--ug-glow);
   flex-shrink: 0;
 }
@@ -1092,7 +1137,7 @@ html[data-reduce-motion='true'] .hero__cta::after {
   min-height: min(70vh, 720px);
   padding: var(--ug-space-4);
   background:
-    radial-gradient(ellipse at 50% 0%, rgba(123, 77, 184, 0.18), transparent 55%),
+    radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--ug-chrome-wash) 18%, transparent), transparent 55%),
     rgba(12, 9, 20, 0.55);
 }
 
@@ -1127,7 +1172,7 @@ html[data-reduce-motion='true'] .hero__cta::after {
   border-radius: var(--ug-radius-md);
   overflow: hidden;
   color: var(--ug-gold);
-  background: linear-gradient(160deg, #2a1f3d, #120e1a);
+  background: var(--ug-cover-gradient);
   border: 1px solid rgba(201, 164, 92, 0.28);
 }
 
@@ -1280,7 +1325,7 @@ html[data-reduce-motion='true'] .hero__cta::after {
   overflow: hidden;
   background:
     radial-gradient(circle at 30% 30%, rgba(201, 164, 92, 0.22), transparent 55%),
-    linear-gradient(160deg, #2a1f3d, #120e1a);
+    var(--ug-cover-gradient);
   color: var(--ug-gold);
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
 }
@@ -1361,6 +1406,7 @@ html[data-reduce-motion='true'] .hero__cta::after {
 }
 
 .playlists-page__play {
+  position: relative;
   display: grid;
   place-items: center;
   width: 56px;
@@ -1368,7 +1414,32 @@ html[data-reduce-motion='true'] .hero__cta::after {
   border-radius: 50%;
   color: #d2c6e4;
   overflow: hidden;
-  /* Same dark purple orb as footer play / transport buttons */
+  /* Gold rim on host; purple plate on ::before follows Buttons hue. */
+  background-color: transparent;
+  background-image: linear-gradient(
+    145deg,
+    #f6c86a 0%,
+    #e8a84a 22%,
+    #c47a28 48%,
+    #8a4e14 68%,
+    #d4923a 88%,
+    #a86220 100%
+  );
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  background-size: auto;
+  background-origin: border-box;
+  background-clip: border-box;
+  border: 1.5px solid transparent;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+.playlists-page__play::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: 0;
   background-color: #2a1548;
   background-image:
     linear-gradient(
@@ -1376,49 +1447,35 @@ html[data-reduce-motion='true'] .hero__cta::after {
       rgba(72, 18, 130, 0.34) 0%,
       rgba(28, 6, 58, 0.46) 100%
     ),
-    url('../../assets/buttons/circle button .png'),
-    linear-gradient(
-      145deg,
-      #f6c86a 0%,
-      #e8a84a 22%,
-      #c47a28 48%,
-      #8a4e14 68%,
-      #d4923a 88%,
-      #a86220 100%
-    );
-  background-repeat: no-repeat, no-repeat, no-repeat;
-  background-position: 0 0, center, 0 0;
-  background-size: 100% 100%, 118% 118%, auto;
-  background-origin: border-box, border-box, border-box;
-  background-clip: padding-box, padding-box, border-box;
-  border: 1.5px solid transparent;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
-  filter: saturate(1.22);
+    url('../../assets/buttons/circle button .png');
+  background-repeat: no-repeat, no-repeat;
+  background-position: 0 0, center;
+  background-size: 100% 100%, 118% 118%;
+  filter: var(--ug-button-tone-filter, hue-rotate(var(--ug-button-hue-shift, 0deg))) saturate(1.22);
+  pointer-events: none;
 }
 
 .playlists-page__play:hover:not(:disabled) {
   color: #d8cee4;
   transform: scale(1.04);
+  background-image: linear-gradient(
+    145deg,
+    #f8d078 0%,
+    #efb050 24%,
+    #d48830 50%,
+    #b06820 72%,
+    #e8a84a 100%
+  );
+}
+
+.playlists-page__play:hover:not(:disabled)::before {
   background-image:
     linear-gradient(
       160deg,
       rgba(40, 16, 72, 0.26) 0%,
       rgba(18, 6, 40, 0.38) 100%
     ),
-    url('../../assets/buttons/circle button .png'),
-    linear-gradient(
-      145deg,
-      #f8d078 0%,
-      #efb050 24%,
-      #d48830 50%,
-      #b06820 72%,
-      #e8a84a 100%
-    );
-  background-repeat: no-repeat, no-repeat, no-repeat;
-  background-position: 0 0, center, 0 0;
-  background-size: 100% 100%, 118% 118%, auto;
-  background-origin: border-box, border-box, border-box;
-  background-clip: padding-box, padding-box, border-box;
+    url('../../assets/buttons/circle button .png');
 }
 
 .playlists-page__play:disabled {
@@ -1427,6 +1484,8 @@ html[data-reduce-motion='true'] .hero__cta::after {
 }
 
 .playlists-page__play-icon {
+  position: relative;
+  z-index: 1;
   transform: translateX(2px);
 }
 

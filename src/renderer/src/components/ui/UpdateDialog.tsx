@@ -11,6 +11,11 @@ type UpdateDialogProps = {
   percent?: number
   onAccept: () => void
   onDismiss: () => void
+  /**
+   * Settings preview — same chrome, no fullscreen takeover.
+   * Edit UpdateDialog.css while this is open; it is the real modal.
+   */
+  embedded?: boolean
 }
 
 /** In-app update prompt — Umbrix chrome instead of a bare OS dialog. */
@@ -19,7 +24,8 @@ export function UpdateDialog({
   version,
   percent = 0,
   onAccept,
-  onDismiss
+  onDismiss,
+  embedded = false
 }: UpdateDialogProps): React.JSX.Element | null {
   /** 0 = offer, 1 = pout, 2 = button confiscated (black hole). */
   const [declineStep, setDeclineStep] = useState(0)
@@ -29,13 +35,13 @@ export function UpdateDialog({
   }, [phase])
 
   useEffect(() => {
-    if (!phase || phase === 'downloading') return
+    if (!phase || phase === 'downloading' || embedded) return
     const onKey = (event: KeyboardEvent): void => {
       if (event.key === 'Escape') onDismiss()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [phase, onDismiss])
+  }, [phase, onDismiss, embedded])
 
   if (!phase) return null
 
@@ -53,7 +59,7 @@ export function UpdateDialog({
       ? 'But... the update I worked so hard on... :('
       : declineStep >= 2
         ? "Well then I'm taking away your button. Now you can only install it, hmph."
-        : "A new update for Umbrix Groove is available!\n\nYou can update it now, or later, I don't care, I'm not your fuckin' mother. But if I was, I'd tell you to update your Umbrix Groove or you won't get any cool new things and bug fixes. Nor will you get any desert after dinner."
+        : "A new update for Umbrix Groove is available!\n\nYou can update it now, or later, I don't care, I'm not your fuckin' mother. But if I was, I'd tell you to update your Umbrix Groove or you won't get any cool new things and bug fixes. Nor will you get any dessert after dinner."
 
   const body =
     phase === 'available'
@@ -92,16 +98,17 @@ export function UpdateDialog({
 
   return (
     <div
-      className="update-dialog"
+      className={`update-dialog${embedded ? ' update-dialog--embedded' : ''}`}
       role="presentation"
       onClick={() => {
+        if (embedded) return
         if (!busy && phase !== 'ready') onDismiss()
       }}
     >
       <div
         className="update-dialog__panel gold-frame"
         role="alertdialog"
-        aria-modal="true"
+        aria-modal={!embedded}
         aria-labelledby="update-dialog-title"
         aria-describedby="update-dialog-message"
         onClick={(event) => event.stopPropagation()}

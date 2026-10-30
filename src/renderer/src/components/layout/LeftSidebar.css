@@ -7,8 +7,8 @@
   isolation: isolate;
   background:
     radial-gradient(ellipse at 50% -8%, rgba(201, 164, 92, 0.1), transparent 42%),
-    radial-gradient(ellipse at 0% 70%, rgba(123, 77, 184, 0.12), transparent 50%),
-    linear-gradient(180deg, #120c1c 0%, #0c0814 48%, #080610 100%);
+    radial-gradient(ellipse at 0% 70%, color-mix(in srgb, var(--ug-chrome-wash) 12%, transparent), transparent 50%),
+    linear-gradient(180deg, var(--ug-shell-top) 0%, var(--ug-shell-mid) 48%, var(--ug-shell-bot) 100%);
   overflow: hidden;
 }
 
@@ -58,11 +58,15 @@
 .left-sidebar__nav-item.is-active {
   color: var(--ug-gold-bright);
   background:
-    linear-gradient(90deg, rgba(123, 77, 184, 0.32), rgba(123, 77, 184, 0.04) 70%),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--ug-chrome-wash) 32%, transparent),
+      color-mix(in srgb, var(--ug-chrome-wash) 4%, transparent) 70%
+    ),
     rgba(18, 12, 28, 0.55);
   box-shadow:
     inset 2px 0 0 var(--ug-gold-bright),
-    inset 0 0 24px rgba(123, 77, 184, 0.12);
+    inset 0 0 24px color-mix(in srgb, var(--ug-chrome-wash) 12%, transparent);
 }
 
 .left-sidebar__nav-item.is-active > .ug-icon {
@@ -283,7 +287,8 @@
 }
 
 .left-sidebar.is-collapsed {
-  overflow: visible;
+  /* Keep gold-frame clip — overflow:visible spawned a body scrollbar and nudged the shell right. */
+  overflow: hidden;
 }
 
 /* Gold-frame L-brackets look cramped on the icon rail. */
@@ -301,8 +306,7 @@
 .left-sidebar.is-collapsed .left-sidebar__nav-item,
 .left-sidebar.is-collapsed .left-sidebar__row,
 .left-sidebar.is-collapsed .left-sidebar__plus,
-.left-sidebar.is-collapsed .playlist-tree__toolbar button,
-.left-sidebar.is-collapsed .playlist-tree__main:not(.playlist-tree__main--playlist) {
+.left-sidebar.is-collapsed .playlist-tree__toolbar button {
   position: relative;
   justify-content: center;
   align-items: center;
@@ -314,7 +318,35 @@
   border-radius: 50%;
   color: #d2c6e4;
   overflow: hidden;
-  /* Same darkened footer orb: circle button .png + deep tint + gold rim */
+  /* Gold rim on host; PNG plate on ::before so Buttons hue can retint it. */
+  background-color: transparent;
+  background-image: linear-gradient(
+    145deg,
+    #f6c86a 0%,
+    #e8a84a 22%,
+    #c47a28 48%,
+    #8a4e14 68%,
+    #d4923a 88%,
+    #a86220 100%
+  );
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  background-size: auto;
+  background-origin: border-box;
+  background-clip: border-box;
+  border: 1.5px solid transparent;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.32);
+}
+
+.left-sidebar.is-collapsed .left-sidebar__nav-item::before,
+.left-sidebar.is-collapsed .left-sidebar__row::before,
+.left-sidebar.is-collapsed .left-sidebar__plus::before,
+.left-sidebar.is-collapsed .playlist-tree__toolbar button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: 0;
   background-color: #2a1548;
   background-image:
     linear-gradient(
@@ -322,29 +354,23 @@
       rgba(72, 18, 130, 0.34) 0%,
       rgba(28, 6, 58, 0.46) 100%
     ),
-    url('../../assets/buttons/circle button .png'),
-    linear-gradient(
-      145deg,
-      #f6c86a 0%,
-      #e8a84a 22%,
-      #c47a28 48%,
-      #8a4e14 68%,
-      #d4923a 88%,
-      #a86220 100%
-    );
-  background-repeat: no-repeat, no-repeat, no-repeat;
-  background-position: 0 0, center, 0 0;
-  background-size: 100% 100%, 118% 118%, auto;
-  background-origin: border-box, border-box, border-box;
-  background-clip: padding-box, padding-box, border-box;
-  border: 1.5px solid transparent;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.32);
+    url('../../assets/buttons/circle button .png');
+  background-repeat: no-repeat, no-repeat;
+  background-position: 0 0, center;
+  background-size: 100% 100%, 118% 118%;
+  background-origin: border-box, border-box;
+  background-clip: padding-box, padding-box;
+  filter: var(--ug-button-tone-filter, hue-rotate(var(--ug-button-hue-shift, 0deg)));
+  pointer-events: none;
 }
 
 .left-sidebar.is-collapsed .left-sidebar__nav-item > .ug-icon,
 .left-sidebar.is-collapsed .left-sidebar__row > .ug-icon,
 .left-sidebar.is-collapsed .left-sidebar__plus > .ug-icon,
-.left-sidebar.is-collapsed .playlist-tree__main > .ug-icon {
+.left-sidebar.is-collapsed .playlist-tree__main > .ug-icon,
+.left-sidebar.is-collapsed .playlist-tree__toolbar button > .ug-icon,
+.left-sidebar.is-collapsed .playlist-tree__folder-tile,
+.left-sidebar.is-collapsed .playlist-tree__folder-tile .ug-icon {
   position: relative;
   z-index: 2;
   color: inherit;
@@ -353,29 +379,29 @@
 .left-sidebar.is-collapsed .left-sidebar__nav-item:hover,
 .left-sidebar.is-collapsed .left-sidebar__row:hover,
 .left-sidebar.is-collapsed .left-sidebar__plus:hover,
-.left-sidebar.is-collapsed .playlist-tree__toolbar button:hover,
-.left-sidebar.is-collapsed .playlist-tree__main:not(.playlist-tree__main--playlist):hover {
+.left-sidebar.is-collapsed .playlist-tree__toolbar button:hover {
   color: #d8cee4;
+  background-image: linear-gradient(
+    145deg,
+    #f8d078 0%,
+    #efb050 24%,
+    #d48830 50%,
+    #b06820 72%,
+    #e8a84a 100%
+  );
+}
+
+.left-sidebar.is-collapsed .left-sidebar__nav-item:hover::before,
+.left-sidebar.is-collapsed .left-sidebar__row:hover::before,
+.left-sidebar.is-collapsed .left-sidebar__plus:hover::before,
+.left-sidebar.is-collapsed .playlist-tree__toolbar button:hover::before {
   background-image:
     linear-gradient(
       160deg,
       rgba(40, 16, 72, 0.26) 0%,
       rgba(18, 6, 40, 0.38) 100%
     ),
-    url('../../assets/buttons/circle button .png'),
-    linear-gradient(
-      145deg,
-      #f8d078 0%,
-      #efb050 24%,
-      #d48830 50%,
-      #b06820 72%,
-      #e8a84a 100%
-    );
-  background-repeat: no-repeat, no-repeat, no-repeat;
-  background-position: 0 0, center, 0 0;
-  background-size: 100% 100%, 118% 118%, auto;
-  background-origin: border-box, border-box, border-box;
-  background-clip: padding-box, padding-box, border-box;
+    url('../../assets/buttons/circle button .png');
 }
 
 .left-sidebar.is-collapsed .left-sidebar__nav-item.is-active {
@@ -383,30 +409,29 @@
   box-shadow:
     0 2px 5px rgba(0, 0, 0, 0.32),
     0 0 0 1px rgba(232, 200, 120, 0.35);
+  background-image: linear-gradient(
+    145deg,
+    #f8d078 0%,
+    #efb050 24%,
+    #d48830 50%,
+    #b06820 72%,
+    #e8a84a 100%
+  );
+}
+
+.left-sidebar.is-collapsed .left-sidebar__nav-item.is-active::before {
   background-image:
     linear-gradient(
       160deg,
       rgba(50, 20, 90, 0.26) 0%,
       rgba(22, 8, 48, 0.38) 100%
     ),
-    url('../../assets/buttons/circle button .png'),
-    linear-gradient(
-      145deg,
-      #f8d078 0%,
-      #efb050 24%,
-      #d48830 50%,
-      #b06820 72%,
-      #e8a84a 100%
-    );
-  background-repeat: no-repeat, no-repeat, no-repeat;
-  background-position: 0 0, center, 0 0;
-  background-size: 100% 100%, 118% 118%, auto;
-  background-origin: border-box, border-box, border-box;
-  background-clip: padding-box, padding-box, border-box;
+    url('../../assets/buttons/circle button .png');
 }
 
-/* Playlists: rounded squares with cover art (not purple orbs) */
-.left-sidebar.is-collapsed .playlist-tree__main--playlist {
+/* Playlists + folders: rounded squares (not circle orbs) */
+.left-sidebar.is-collapsed .playlist-tree__main--playlist,
+.left-sidebar.is-collapsed .playlist-tree__main--folder {
   position: relative;
   display: grid;
   place-items: center;
@@ -427,14 +452,29 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 
+.left-sidebar.is-collapsed .playlist-tree__main--folder {
+  background: var(--ug-cover-gradient);
+}
+
 .left-sidebar.is-collapsed .playlist-tree__main--playlist:hover,
-.left-sidebar.is-collapsed .playlist-tree__row.is-active .playlist-tree__main--playlist {
+.left-sidebar.is-collapsed .playlist-tree__row.is-active .playlist-tree__main--playlist,
+.left-sidebar.is-collapsed .playlist-tree__main--folder:hover,
+.left-sidebar.is-collapsed .playlist-tree__row.is-active .playlist-tree__main--folder {
   border-color: rgba(201, 164, 92, 0.55);
-  background: #120c1c;
   background-image: none;
   box-shadow:
     0 2px 8px rgba(0, 0, 0, 0.45),
     0 0 0 1px rgba(232, 200, 120, 0.25);
+}
+
+.left-sidebar.is-collapsed .playlist-tree__main--playlist:hover,
+.left-sidebar.is-collapsed .playlist-tree__row.is-active .playlist-tree__main--playlist {
+  background: #120c1c;
+}
+
+.left-sidebar.is-collapsed .playlist-tree__main--folder:hover,
+.left-sidebar.is-collapsed .playlist-tree__row.is-active .playlist-tree__main--folder {
+  background: var(--ug-cover-gradient);
 }
 
 .left-sidebar.is-collapsed .playlist-tree__main--playlist .playlist-cover {
@@ -503,9 +543,11 @@
   overflow: visible;
 }
 
-.left-sidebar.is-collapsed .left-sidebar__tree .candy-scroll__viewport {
+.left-sidebar.is-collapsed .left-sidebar__tree .candy-scroll__viewport,
+.left-sidebar.is-collapsed .left-sidebar__tree.candy-scroll.is-overflowing .candy-scroll__viewport {
   overflow: visible;
   height: auto;
+  padding-left: 0;
   padding-right: 0;
 }
 
@@ -514,6 +556,7 @@
 }
 
 .left-sidebar.is-collapsed .playlist-tree {
+  width: 100%;
   align-items: center;
   gap: 8px;
   overflow: visible;
@@ -546,8 +589,13 @@
 
 .left-sidebar.is-collapsed .playlist-tree__row {
   justify-content: center;
+  align-items: center;
+  width: 44px;
+  max-width: 44px;
   min-height: 0;
-  padding-left: 0 !important;
+  /* Kill depth indent + the old 8px right pad that shoved tiles left of the rail center. */
+  padding: 0 !important;
+  margin-inline: auto;
   background: transparent;
   box-shadow: none;
   border-bottom: none;
@@ -567,11 +615,29 @@
   display: none;
 }
 
+/* Folder glyph fills the rounded square — same soft lavender as play control icons. */
 .left-sidebar.is-collapsed .playlist-tree__folder-tile {
-  width: auto;
-  height: auto;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
   border: none;
+  border-radius: 0;
   background: transparent;
+  color: #d2c6e4;
+}
+
+.left-sidebar.is-collapsed .playlist-tree__main--folder:hover .playlist-tree__folder-tile,
+.left-sidebar.is-collapsed .playlist-tree__row.is-active .playlist-tree__folder-tile {
+  color: #d8cee4;
+}
+
+.left-sidebar.is-collapsed .playlist-tree__folder-tile .ug-icon,
+.left-sidebar.is-collapsed .playlist-tree__folder-tile svg {
+  width: 20px;
+  height: 20px;
   color: inherit;
 }
 
@@ -580,6 +646,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
   gap: 8px;
 }
 
@@ -594,7 +661,7 @@
   padding: 6px 10px;
   border-radius: 8px;
   border: 1px solid var(--ug-border-subtle);
-  background: #161022;
+  background: var(--ug-panel);
   color: var(--ug-text);
   font-family: var(--ug-font-body);
   font-size: 12px;

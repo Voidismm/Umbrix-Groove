@@ -23,6 +23,8 @@ type SettingsModalProps = {
   onClose: () => void
   focusTarget?: SettingsFocusTarget | null
   onFocusHandled?: () => void
+  /** Close settings and open the floating live appearance studio. */
+  onEditAppearance?: () => void
 }
 
 type SettingsSectionId =
@@ -203,7 +205,8 @@ export function SettingsModal({
   open,
   onClose,
   focusTarget = null,
-  onFocusHandled
+  onFocusHandled,
+  onEditAppearance
 }: SettingsModalProps): React.JSX.Element | null {
   const { folders, scanning, addFolder, rescanAll, rescanFolder, removeFolder, openFolder } =
     useLibrary()
@@ -490,11 +493,28 @@ export function SettingsModal({
               {section === 'appearance' ? (
                 <div className="settings-modal__prefs">
                   <p className="settings-modal__hint">
-                    Gold rim, amethyst panels, and Cinzel brand stay locked to Umbrix Galaxy.
+                    Open the live studio to tint UI purple, buttons, and scrollbars while you keep
+                    using the app. Gold brand accents stay Umbrix.
                   </p>
+                  <div className="settings-modal__actions">
+                    <button
+                      type="button"
+                      className="hero__cta"
+                      onClick={() => onEditAppearance?.()}
+                    >
+                      <span>Edit appearance</span>
+                    </button>
+                  </div>
                   <ul className="settings-modal__pref-list">
-                    <StaticPrefRow label="Theme" value="Umbrix Galaxy" />
-                    <StaticPrefRow label="Accent" value="Warm gold" />
+                    <StaticPrefRow
+                      label="Theme"
+                      value={
+                        settings.appearance.themeId === 'custom'
+                          ? 'Custom hues'
+                          : settings.appearance.themeId.charAt(0).toUpperCase() +
+                            settings.appearance.themeId.slice(1)
+                      }
+                    />
                     <TogglePrefRow
                       label="Compact density"
                       description="Tighter padding in shell chrome."

@@ -82,6 +82,19 @@ export function TitleBar({
             }
           }}
         />
+        {draft ? (
+          <button
+            type="button"
+            className="titlebar__search-clear"
+            aria-label="Clear search"
+            onClick={() => {
+              setDraft('')
+              setSearchQuery('')
+            }}
+          >
+            <Icon name="close" size={14} />
+          </button>
+        ) : null}
       </div>
 
       <div className="titlebar__actions">

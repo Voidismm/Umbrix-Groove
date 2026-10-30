@@ -1,4 +1,4 @@
-.playlist-tracks {
+﻿.playlist-tracks {
   padding: 8px 8px 24px;
   background: transparent;
   border: none;
@@ -129,7 +129,8 @@
 
 .playlist-tracks__row:hover .track-table__num-btn,
 .playlist-tracks__row.is-active .track-table__num-btn {
-  color: #b48ae8;
+  /* Follow Buttons channel — same accent family as Lyrics / About / Related tabs. */
+  color: color-mix(in srgb, var(--ug-button-fill-top) 58%, #f2ebff);
   background: transparent;
   background-image: none;
   border: none;
@@ -137,8 +138,8 @@
 }
 
 .playlist-tracks__row:hover .track-table__num-btn:hover {
-  color: #d2b4ff;
-  background: rgba(123, 77, 184, 0.16);
+  color: color-mix(in srgb, var(--ug-button-fill-top) 40%, #f8f4ff);
+  background: color-mix(in srgb, var(--ug-button-fill-mid) 22%, transparent);
   background-image: none;
 }
 
@@ -165,7 +166,7 @@
 }
 
 .playlist-tracks__row.is-active {
-  background: rgba(123, 77, 184, 0.18);
+  background: color-mix(in srgb, var(--ug-chrome-wash) 18%, transparent);
   box-shadow: inset 2px 0 0 rgba(201, 164, 92, 0.55);
 }
 

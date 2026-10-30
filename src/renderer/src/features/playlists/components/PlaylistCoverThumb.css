@@ -1,9 +1,9 @@
-.playlist-cover {
+﻿.playlist-cover {
   display: grid;
   flex-shrink: 0;
   overflow: hidden;
   border-radius: 8px;
-  background: linear-gradient(145deg, #2a1848, #120c1c);
+  background: var(--ug-cover-gradient);
   border: 1px solid rgba(201, 164, 92, 0.22);
 }
 
@@ -35,7 +35,7 @@
   place-items: center;
   background:
     radial-gradient(circle at 35% 30%, rgba(201, 164, 92, 0.28), transparent 55%),
-    linear-gradient(145deg, #2a1848, #120c1c);
+    var(--ug-cover-gradient);
 }
 
 .playlist-cover--loved.playlist-cover--fill {

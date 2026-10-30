@@ -97,13 +97,13 @@
 }
 
 .playlist-rec__play:hover {
-  color: var(--ug-text);
-  background: rgba(123, 77, 184, 0.22);
+  color: color-mix(in srgb, var(--ug-button-fill-top) 40%, #f8f4ff);
+  background: color-mix(in srgb, var(--ug-button-fill-mid) 22%, transparent);
 }
 
 .playlist-rec__row.is-active .playlist-rec__play,
 .playlist-rec__row:hover .playlist-rec__play {
-  color: rgba(214, 186, 255, 0.95);
+  color: color-mix(in srgb, var(--ug-button-fill-top) 58%, #f2ebff);
 }
 
 .playlist-rec__main {
@@ -128,7 +128,7 @@
   overflow: hidden;
   display: grid;
   place-items: center;
-  background: linear-gradient(145deg, #2a1848, #120c1c);
+  background: var(--ug-cover-gradient);
   border: 1px solid var(--ug-border-subtle);
   color: var(--ug-gold-bright);
   flex-shrink: 0;

@@ -1,4 +1,4 @@
-.app-shell {
+﻿.app-shell {
   position: relative;
   display: grid;
   grid-template-rows: var(--ug-titlebar-h) 1fr auto;
@@ -13,7 +13,7 @@
   min-height: 0;
   padding: 10px;
   background:
-    radial-gradient(ellipse at 10% 0%, rgba(123, 77, 184, 0.08), transparent 40%),
+    radial-gradient(ellipse at 10% 0%, color-mix(in srgb, var(--ug-chrome-wash) 8%, transparent), transparent 40%),
     var(--ug-void);
 }
 
@@ -33,7 +33,8 @@
 .app-shell--resizing .app-shell__pane {
   pointer-events: none;
   overflow: hidden;
-  contain: layout style paint;
+  /* Avoid contain:style — it forced a full cascade recalc that nudged chrome. */
+  contain: layout paint;
   transition: none !important;
 }
 
@@ -44,15 +45,10 @@
   transition: none !important;
 }
 
-/* Drop saturate filters on circle chrome while columns reflow. */
-.app-shell--resizing .player-footer__icon,
-.app-shell--resizing .player-footer__play,
-.app-shell--resizing .player-footer__controls button,
-.app-shell--resizing .left-sidebar.is-collapsed .left-sidebar__nav-item,
-.app-shell--resizing .left-sidebar.is-collapsed .left-sidebar__row,
-.app-shell--resizing .left-sidebar.is-collapsed .left-sidebar__plus,
-.app-shell--resizing .left-sidebar.is-collapsed .playlist-tree__main {
-  filter: none !important;
+/* Stars / nebula are pure paint cost during gutter drag. Keep button tone
+   filters on — stripping them flashed stock purple during collapse/resize. */
+.app-shell--resizing .galaxy-sky {
+  visibility: hidden;
 }
 
 .app-shell--resizing .player-footer {
@@ -113,7 +109,7 @@
 
 .app-shell__resizer:hover::before,
 .app-shell--resizing .app-shell__resizer::before {
-  background: rgba(165, 109, 232, 0.35);
+  background: color-mix(in srgb, var(--ug-amethyst-bright) 45%, transparent);
   transition: none;
 }
 

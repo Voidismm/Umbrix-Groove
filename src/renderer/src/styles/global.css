@@ -1,4 +1,4 @@
-@import '@fontsource/cinzel/400.css';
+﻿@import '@fontsource/cinzel/400.css';
 @import '@fontsource/cinzel/600.css';
 @import '@fontsource/cinzel/700.css';
 @import '@fontsource/cormorant-garamond/400.css';
@@ -75,7 +75,7 @@ img {
 /* Inset scrollbars so they clear rounded panel corners */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(201, 164, 92, 0.4) transparent;
+  scrollbar-color: var(--ug-scrollbar-thumb) transparent;
 }
 
 ::-webkit-scrollbar {
@@ -91,14 +91,14 @@ img {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(201, 164, 92, 0.32);
+  background: var(--ug-scrollbar-thumb);
   border-radius: var(--ug-radius-pill);
   border: 3px solid transparent;
   background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(201, 164, 92, 0.5);
+  background: var(--ug-scrollbar-thumb-hover);
   border: 3px solid transparent;
   background-clip: padding-box;
 }
@@ -179,11 +179,17 @@ img {
   cursor: pointer;
 }
 
+/*
+  Native tracks do not reliably honor multi-layer background-clip, so gold is a
+  real border color (never filtered). Fill follows button CSS vars — no hue-rotate
+  on this element, or the border would shift too.
+*/
 .ug-slider::-webkit-slider-runnable-track {
   height: 10px;
+  box-sizing: border-box;
   border-radius: 999px;
-  border: none;
-  background-color: #4a2080;
+  border: 1.5px solid #d4a85a;
+  background-color: var(--ug-button-fill-mid);
   background-image:
     linear-gradient(
       to right,
@@ -194,13 +200,13 @@ img {
     ),
     linear-gradient(
       160deg,
-      rgba(28, 10, 52, 0.28) 0%,
-      rgba(12, 4, 28, 0.38) 100%
+      color-mix(in srgb, var(--ug-button-fill-top) 40%, transparent),
+      color-mix(in srgb, var(--ug-button-fill-bot) 55%, transparent)
     ),
     url('../assets/buttons/wide button round.png');
   background-repeat: no-repeat, no-repeat, no-repeat;
   background-position: 0 0, 0 0, center;
-  background-size: 100% 100%, 100% 100%, 100% 100%;
+  background-size: 100% 100%, 100% 100%, 118% 160%;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
@@ -211,25 +217,19 @@ img {
   width: 14px;
   height: 14px;
   margin-top: -2px;
-  border: 1.5px solid transparent;
+  border: 1.5px solid #d4a85a;
   border-radius: 50%;
-  background-color: #4a2878;
+  background-color: var(--ug-button-fill-mid);
   background-image:
-    url('../assets/buttons/circle button .png'),
     linear-gradient(
-      145deg,
-      #f6c86a 0%,
-      #e8a84a 22%,
-      #c47a28 48%,
-      #8a4e14 68%,
-      #d4923a 88%,
-      #a86220 100%
-    );
+      160deg,
+      color-mix(in srgb, var(--ug-button-fill-top) 45%, transparent),
+      color-mix(in srgb, var(--ug-button-fill-bot) 60%, transparent)
+    ),
+    url('../assets/buttons/circle button .png');
   background-repeat: no-repeat, no-repeat;
-  background-position: center, 0 0;
-  background-size: cover, auto;
-  background-origin: border-box, border-box;
-  background-clip: padding-box, border-box;
+  background-position: 0 0, center;
+  background-size: 100% 100%, 118% 118%;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
 }
 
@@ -239,9 +239,10 @@ img {
 
 .ug-slider::-moz-range-track {
   height: 10px;
+  box-sizing: border-box;
   border-radius: 999px;
-  border: none;
-  background-color: #4a2080;
+  border: 1.5px solid #d4a85a;
+  background-color: var(--ug-button-fill-mid);
   background-image:
     linear-gradient(
       to right,
@@ -252,13 +253,13 @@ img {
     ),
     linear-gradient(
       160deg,
-      rgba(28, 10, 52, 0.28) 0%,
-      rgba(12, 4, 28, 0.38) 100%
+      color-mix(in srgb, var(--ug-button-fill-top) 40%, transparent),
+      color-mix(in srgb, var(--ug-button-fill-bot) 55%, transparent)
     ),
     url('../assets/buttons/wide button round.png');
   background-repeat: no-repeat, no-repeat, no-repeat;
   background-position: 0 0, 0 0, center;
-  background-size: 100% 100%, 100% 100%, 100% 100%;
+  background-size: 100% 100%, 100% 100%, 118% 160%;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
@@ -266,26 +267,30 @@ img {
   box-sizing: border-box;
   width: 14px;
   height: 14px;
-  border: 1.5px solid transparent;
+  border: 1.5px solid #d4a85a;
   border-radius: 50%;
-  background-color: #4a2878;
+  background-color: var(--ug-button-fill-mid);
   background-image:
-    url('../assets/buttons/circle button .png'),
     linear-gradient(
-      145deg,
-      #f6c86a 0%,
-      #e8a84a 22%,
-      #c47a28 48%,
-      #8a4e14 68%,
-      #d4923a 88%,
-      #a86220 100%
-    );
+      160deg,
+      color-mix(in srgb, var(--ug-button-fill-top) 45%, transparent),
+      color-mix(in srgb, var(--ug-button-fill-bot) 60%, transparent)
+    ),
+    url('../assets/buttons/circle button .png');
   background-repeat: no-repeat, no-repeat;
-  background-position: center, 0 0;
-  background-size: cover, auto;
-  background-origin: border-box, border-box;
-  background-clip: padding-box, border-box;
+  background-position: 0 0, center;
+  background-size: 100% 100%, 118% 118%;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+}
+
+.ug-slider--bare::-webkit-slider-runnable-track,
+.ug-slider--bare::-moz-range-track,
+.ug-slider--bare::-webkit-slider-thumb,
+.ug-slider--bare::-moz-range-thumb {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  filter: none;
 }
 
 .ug-slider:disabled {
@@ -316,4 +321,14 @@ html[data-shell-resizing='1'] *::before,
 html[data-shell-resizing='1'] *::after {
   transition: none !important;
   animation: none !important;
+}
+
+/* Extra paint relief — backdrop blur + filters are brutal while grid columns move. */
+html[data-shell-resizing='1'] .app-shell__pane,
+html[data-shell-resizing='1'] .left-sidebar,
+html[data-shell-resizing='1'] .right-sidebar,
+html[data-shell-resizing='1'] .center,
+html[data-shell-resizing='1'] .player-footer {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }

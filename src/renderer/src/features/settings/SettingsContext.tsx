@@ -8,11 +8,13 @@ import {
   type ReactNode
 } from 'react'
 import {
+  appearanceTheme,
   loadSettings,
   patchSettings,
   saveSettings,
   type AppSettings
 } from './settingsStore'
+import { applyAppearanceHues } from './themePresets'
 
 type SettingsContextValue = {
   settings: AppSettings
@@ -30,6 +32,7 @@ function applyDocumentPrefs(settings: AppSettings): void {
   root.dataset.reduceMotion = settings.appearance.reduceMotion ? 'true' : 'false'
   root.dataset.density = settings.appearance.compactDensity ? 'compact' : 'comfortable'
   root.dataset.buttonTips = settings.appearance.showButtonTips ? 'true' : 'false'
+  applyAppearanceHues(appearanceTheme(settings.appearance))
 }
 
 export function SettingsProvider({ children }: { children: ReactNode }): React.JSX.Element {
