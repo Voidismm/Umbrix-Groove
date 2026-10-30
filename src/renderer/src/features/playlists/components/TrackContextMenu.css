@@ -1,4 +1,4 @@
-.track-ctx {
+﻿.track-ctx {
   position: fixed;
   z-index: 125;
   min-width: 220px;
@@ -23,7 +23,7 @@
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: rgba(242, 235, 255, 0.92);
+  color: rgba(210, 198, 228, 0.88);
   font: inherit;
   font-size: 13px;
   text-align: left;
@@ -38,7 +38,7 @@
 .track-ctx__item:hover,
 .track-ctx__item.is-open {
   background: rgba(123, 77, 184, 0.28);
-  color: #fff;
+  color: #d4c8e6;
 }
 
 .track-ctx__caret {

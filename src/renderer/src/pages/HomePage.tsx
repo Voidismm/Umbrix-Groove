@@ -1,10 +1,14 @@
-import { useCallback, useEffect, useState } from 'react'
+﻿import { useCallback, useEffect, useState } from 'react'
 import type { HomePersonalization, LocalMix, PlayedTrackRow, TrackRow } from '@shared/types'
 import { PLATO_QUOTE } from '@renderer/app/navigation'
 import { CoverArt, useLibrary } from '@renderer/features/library'
 import { usePlayback } from '@renderer/features/player'
 import { artworkUrl } from '@renderer/lib/format'
+import { BrowseTabs } from '@renderer/components/ui/BrowseTabs'
+import { GalaxySky } from '@renderer/components/ui/GalaxySky'
 import { Icon } from '@renderer/components/ui/Icon'
+import { RailScroller } from '@renderer/components/ui/RailScroller'
+import { openSettings } from '@renderer/lib/settingsNav'
 
 const emptyHome: HomePersonalization = {
   jumpBackIn: [],
@@ -13,6 +17,17 @@ const emptyHome: HomePersonalization = {
   dailyMixes: [],
   mixesGeneratedAt: null
 }
+
+type HomeTabId = 'home' | 'jump' | 'repeat' | 'most' | 'mixes' | 'fresh'
+
+const HOME_TABS: { id: HomeTabId; label: string }[] = [
+  { id: 'home', label: 'Home' },
+  { id: 'jump', label: 'Jump Back In' },
+  { id: 'repeat', label: 'On Repeat' },
+  { id: 'most', label: 'Most Played' },
+  { id: 'mixes', label: 'Daily Mixes' },
+  { id: 'fresh', label: 'Fresh Finds' }
+]
 
 function MixCover({ mix }: { mix: LocalMix }): React.JSX.Element {
   const keys = mix.coverArtKeys
@@ -43,14 +58,13 @@ function MixCover({ mix }: { mix: LocalMix }): React.JSX.Element {
   )
 }
 
-/** Home dashboard — listening rails + local daily mixes. */
+/** Home dashboard — welcome, listening rails + local daily mixes. */
 export function HomePage(): React.JSX.Element {
   const {
     summary,
     albums,
     recentTracks,
     ready,
-    addFolder,
     importFiles,
     selectAlbum,
     openDailyMix,
@@ -61,6 +75,7 @@ export function HomePage(): React.JSX.Element {
   const [home, setHome] = useState<HomePersonalization>(emptyHome)
   const [homeReady, setHomeReady] = useState(false)
   const [refreshingMixes, setRefreshingMixes] = useState(false)
+  const [tab, setTab] = useState<HomeTabId>('home')
 
   const loadHome = useCallback(async (): Promise<void> => {
     if (!window.api?.library?.getHomePersonalization) {
@@ -81,8 +96,9 @@ export function HomePage(): React.JSX.Element {
     void loadHome()
   }, [loadHome, summary.trackCount])
 
-  const playList = (tracks: TrackRow[]): void => {
-    if (tracks[0]) playTrack(tracks[0], tracks)
+  const openTrackAlbum = (track: TrackRow): void => {
+    if (!track.albumId) return
+    selectAlbum(track.albumId)
   }
 
   const refreshMixes = async (): Promise<void> => {
@@ -104,41 +120,61 @@ export function HomePage(): React.JSX.Element {
     ? `Refreshes daily · last built ${new Date(home.mixesGeneratedAt).toLocaleString()}`
     : 'Built from decades + genres in your library'
 
+  const hour = new Date().getHours()
+  const greeting =
+    hour < 5 ? 'Still spinning after midnight' : hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
+
   return (
     <>
       <section className="hero gold-frame" aria-label="Welcome">
+        <div className="hero__cosmos" aria-hidden>
+          <GalaxySky variant="hero" seed={0} />
+          <span className="hero__orb hero__orb--a" />
+          <span className="hero__orb hero__orb--b" />
+          <span className="hero__orb hero__orb--c" />
+          <span className="hero__ring" />
+        </div>
         <div className="hero__veil" />
         <div className="hero__content">
-          <h1 className="hero__welcome">
-            Welcome back to <span className="hero__brand">Umbrix Groove</span>
-          </h1>
-          <div className="hero__actions">
-            <button
-              type="button"
-              className="hero__cta"
-              disabled={scanning}
-              onClick={() => void addFolder()}
-            >
-              Add Music Folder
-            </button>
-            <button
-              type="button"
-              className="hero__cta hero__cta--ghost"
-              disabled={scanning}
-              onClick={() => void importFiles()}
-            >
-              Import Files
-            </button>
+          <div className="hero__intro">
+            <p className="hero__eyebrow">{greeting}</p>
+            <h1 className="hero__welcome">
+              <span className="hero__welcome-line">Welcome back to</span>
+              <span className="hero__brand">Umbrix Groove</span>
+            </h1>
+            <p className="hero__tagline">
+              All of your music in one place and not on a shitty paid service.
+            </p>
           </div>
-          {error ? <p className="hero__error">{error}</p> : null}
-          <p className="hero__stats">
-            {ready
-              ? `${summary.trackCount} songs · ${summary.albumCount} albums · ${summary.artistCount} artists · ${summary.folderCount} folders`
-              : 'Loading library…'}
-            {summary.incompleteCount > 0
-              ? ` · ${summary.incompleteCount} with incomplete tags`
-              : ''}
-          </p>
+          <div className="hero__foot">
+            <div className="hero__actions">
+              <button
+                type="button"
+                className="hero__cta"
+                disabled={scanning}
+                onClick={() => openSettings({ focus: 'add-folder' })}
+              >
+                <span>Add Music Folder</span>
+              </button>
+              <button
+                type="button"
+                className="hero__cta hero__cta--ghost"
+                disabled={scanning}
+                onClick={() => void importFiles()}
+              >
+                <span>Import Files</span>
+              </button>
+            </div>
+            {error ? <p className="hero__error">{error}</p> : null}
+            <p className="hero__stats">
+              {ready
+                ? `${summary.trackCount.toLocaleString()} songs · ${summary.albumCount.toLocaleString()} albums · ${summary.artistCount.toLocaleString()} artists · ${summary.folderCount} folders`
+                : 'Loading library…'}
+              {summary.incompleteCount > 0
+                ? ` · ${summary.incompleteCount} with incomplete tags`
+                : ''}
+            </p>
+          </div>
         </div>
         <blockquote className="hero__quote">
           <p>“{PLATO_QUOTE}”</p>
@@ -149,165 +185,305 @@ export function HomePage(): React.JSX.Element {
       {summary.trackCount === 0 && !scanning ? (
         <section className="placeholder gold-frame">
           <h2>No local music indexed yet</h2>
-          <p>
-            Point Umbrix Groove at a folder on this PC. Files stay where they are — we only read
-            tags and build a searchable index.
-          </p>
+          <p>Point Umbrix Groove at a folder on this PC.</p>
+          <button
+            type="button"
+            className="hero__cta"
+            onClick={() => openSettings({ focus: 'add-folder' })}
+          >
+            Add Folder
+          </button>
         </section>
       ) : (
         <>
-          {home.dailyMixes.length > 0 ? (
-            <section className="rail" aria-labelledby="mixes-heading">
-              <div className="rail__head">
-                <h2 id="mixes-heading">Daily Mixes</h2>
-                <div className="rail__head-actions">
-                  <span>{mixNote}</span>
-                  <button
-                    type="button"
-                    className="rail__link"
-                    disabled={refreshingMixes}
-                    onClick={() => void refreshMixes()}
-                  >
-                    {refreshingMixes ? 'Building…' : 'Refresh now'}
-                  </button>
-                </div>
-              </div>
-              <div className="rail__row rail__row--mixes">
-                {home.dailyMixes.map((mix) => (
-                  <button
-                    key={mix.id}
-                    type="button"
-                    className="mix-card"
-                    onClick={() => openDailyMix(mix)}
-                  >
-                    <div className="mix-card__frame">
-                      <MixCover mix={mix} />
-                      <span
-                        className="mix-card__accent"
-                        style={{ background: mix.accentColor }}
-                        aria-hidden
-                      />
-                    </div>
-                    <div className="mix-card__copy">
-                      <h3>{mix.title}</h3>
-                      <p>
-                        {mix.trackCount} song{mix.trackCount === 1 ? '' : 's'}
-                        {mix.subtitle ? ` · ${mix.subtitle}` : ''}
-                      </p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </section>
-          ) : homeReady ? (
-            <section className="placeholder gold-frame home-hint">
-              <h2>Daily Mixes need tags</h2>
-              <p>
-                Umbrix builds mixes like “1990s Hip Hop” from year + genre on your files. Add more
-                tagged tracks, or hit Refresh after a rescan.
-              </p>
-              <button
-                type="button"
-                className="hero__cta hero__cta--ghost"
-                disabled={refreshingMixes}
-                onClick={() => void refreshMixes()}
-              >
-                Try building mixes
-              </button>
-            </section>
-          ) : null}
+          <BrowseTabs
+            label="Home sections"
+            tabs={HOME_TABS}
+            active={tab}
+            onChange={setTab}
+          />
 
-          {home.jumpBackIn.length > 0 ? (
-            <PlayedRail
-              id="jump-heading"
-              title="Jump back in"
-              note="Recently played"
-              tracks={home.jumpBackIn}
-              meta={(t) => t.artistName}
-              onPlay={playList}
+          {tab === 'home' ? (
+            <HomeOverview
+              home={home}
+              homeReady={homeReady}
+              mixNote={mixNote}
+              refreshingMixes={refreshingMixes}
+              recentTracks={recentTracks}
+              albums={albums}
+              albumCount={summary.albumCount}
+              onRefreshMixes={() => void refreshMixes()}
+              onOpenMix={openDailyMix}
+              onPlay={(track, list) => playTrack(track, list)}
+              onOpenTrack={openTrackAlbum}
+              onOpenAlbum={selectAlbum}
+              onShowTab={setTab}
             />
           ) : null}
 
-          {home.onRepeat.length > 0 ? (
-            <PlayedRail
-              id="repeat-heading"
+          {tab === 'jump' ? (
+            <ShelfPage
+              title="Jump Back In"
+              note="Pick up where you left off"
+              emptyTitle="Nothing to jump into yet"
+              emptyBody="Play a few tracks and they will land here for a quick restart."
+              tracks={home.jumpBackIn}
+              meta={(t) => t.artistName}
+              onPlay={(track, list) => playTrack(track, list)}
+              onOpen={openTrackAlbum}
+            />
+          ) : null}
+
+          {tab === 'repeat' ? (
+            <ShelfPage
               title="On Repeat"
               note="Heavy rotation · last 14 days"
+              emptyTitle="No obsession yet"
+              emptyBody="Hammer a song for a bit and Umbrix will catch the habit."
               tracks={home.onRepeat}
               meta={(t) =>
                 `${t.recentPlayCount ?? t.playCount} plays recently · ${t.artistName}`
               }
-              onPlay={playList}
+              onPlay={(track, list) => playTrack(track, list)}
+              onOpen={openTrackAlbum}
             />
           ) : null}
 
-          {home.mostPlayed.length > 0 ? (
-            <PlayedRail
-              id="most-heading"
+          {tab === 'most' ? (
+            <ShelfPage
               title="Most Played"
-              note="All-time from this library"
+              note="All-time favorites from this library"
+              emptyTitle="Play history starts now"
+              emptyBody="Finish a song (or listen 30+ seconds then skip) and the crown jewels show up here."
               tracks={home.mostPlayed}
               meta={(t) => `${t.playCount} play${t.playCount === 1 ? '' : 's'} · ${t.artistName}`}
-              onPlay={playList}
+              onPlay={(track, list) => playTrack(track, list)}
+              onOpen={openTrackAlbum}
             />
-          ) : homeReady ? (
-            <section className="placeholder gold-frame home-hint">
-              <h2>Play history starts now</h2>
-              <p>
-                Finish a song (or listen 30+ seconds then skip) and Umbrix will fill Most Played,
-                On Repeat, and Jump back in.
-              </p>
-            </section>
           ) : null}
 
-          <section className="rail" aria-labelledby="recent-heading">
-            <div className="rail__head">
-              <h2 id="recent-heading">Recently Added</h2>
-              <span>From your library</span>
-            </div>
-            <div className="rail__row">
-              {recentTracks.map((track) => (
-                <button
-                  key={track.id}
-                  type="button"
-                  className="card card--button"
-                  onClick={() => playTrack(track, recentTracks)}
-                >
-                  <CoverArt title={track.title} artworkKey={track.artworkKey} />
-                  <h3>{track.title}</h3>
-                  <p>{track.artistName}</p>
-                </button>
-              ))}
-            </div>
-          </section>
+          {tab === 'mixes' ? (
+            <MixesPage
+              mixes={home.dailyMixes}
+              homeReady={homeReady}
+              mixNote={mixNote}
+              refreshing={refreshingMixes}
+              onRefresh={() => void refreshMixes()}
+              onOpen={openDailyMix}
+            />
+          ) : null}
 
-          <section className="rail" aria-labelledby="albums-heading">
-            <div className="rail__head">
-              <h2 id="albums-heading">Albums</h2>
-              <span>{summary.albumCount} in library</span>
-            </div>
-            <div className="rail__row">
-              {albums.slice(0, 12).map((album) => (
-                <button
-                  key={album.id}
-                  type="button"
-                  className="card card--button"
-                  onClick={() => selectAlbum(album.id)}
-                >
-                  <div className="card__frame gold-frame">
-                    <CoverArt title={album.title} artworkKey={album.artworkKey} tone="dusk" />
-                  </div>
-                  <h3>{album.title}</h3>
-                  <p>
-                    {album.artistName}
-                    {album.trackCount ? ` · ${album.trackCount}` : ''}
-                  </p>
-                </button>
-              ))}
-            </div>
-          </section>
+          {tab === 'fresh' ? (
+            <FreshPage
+              tracks={recentTracks}
+              onPlay={(track, list) => playTrack(track, list)}
+              onOpen={openTrackAlbum}
+            />
+          ) : null}
         </>
       )}
+    </>
+  )
+}
+
+function HomeOverview({
+  home,
+  homeReady,
+  mixNote,
+  refreshingMixes,
+  recentTracks,
+  albums,
+  albumCount,
+  onRefreshMixes,
+  onOpenMix,
+  onPlay,
+  onOpenTrack,
+  onOpenAlbum,
+  onShowTab
+}: {
+  home: HomePersonalization
+  homeReady: boolean
+  mixNote: string
+  refreshingMixes: boolean
+  recentTracks: TrackRow[]
+  albums: { id: string; title: string; artistName: string; artworkKey: string | null; trackCount?: number }[]
+  albumCount: number
+  onRefreshMixes: () => void
+  onOpenMix: (mix: LocalMix) => void
+  onPlay: (track: PlayedTrackRow | TrackRow, list: Array<PlayedTrackRow | TrackRow>) => void
+  onOpenTrack: (track: TrackRow) => void
+  onOpenAlbum: (id: string) => void
+  onShowTab: (tab: HomeTabId) => void
+}): React.JSX.Element {
+  return (
+    <>
+      {home.dailyMixes.length > 0 ? (
+        <section className="rail" aria-labelledby="mixes-heading">
+          <div className="rail__head">
+            <h2 id="mixes-heading">Daily Mixes</h2>
+            <div className="rail__head-actions">
+              <span>{mixNote}</span>
+              <button type="button" className="rail__link" onClick={() => onShowTab('mixes')}>
+                See all
+              </button>
+              <button
+                type="button"
+                className="rail__link"
+                disabled={refreshingMixes}
+                onClick={onRefreshMixes}
+              >
+                {refreshingMixes ? 'Building…' : 'Refresh now'}
+              </button>
+            </div>
+          </div>
+          <RailScroller rowClassName="rail__row--mixes" label="Daily Mixes">
+            {home.dailyMixes.map((mix) => (
+              <button
+                key={mix.id}
+                type="button"
+                className="mix-card"
+                onClick={() => onOpenMix(mix)}
+                onDoubleClick={() => onOpenMix(mix)}
+              >
+                <div className="mix-card__frame">
+                  <MixCover mix={mix} />
+                  <span
+                    className="mix-card__accent"
+                    style={{ background: mix.accentColor }}
+                    aria-hidden
+                  />
+                </div>
+                <div className="mix-card__copy">
+                  <h3>{mix.title}</h3>
+                  <p>
+                    {mix.trackCount} song{mix.trackCount === 1 ? '' : 's'}
+                    {mix.subtitle ? ` · ${mix.subtitle}` : ''}
+                  </p>
+                </div>
+              </button>
+            ))}
+          </RailScroller>
+        </section>
+      ) : homeReady ? (
+        <section className="placeholder gold-frame home-hint">
+          <h2>Daily Mixes need tags</h2>
+          <p>
+            Umbrix builds mixes like “1990s Hip Hop” from year + genre on your files. Add more
+            tagged tracks, or hit Refresh after a rescan.
+          </p>
+          <button
+            type="button"
+            className="hero__cta hero__cta--ghost"
+            disabled={refreshingMixes}
+            onClick={onRefreshMixes}
+          >
+            Try building mixes
+          </button>
+        </section>
+      ) : null}
+
+      {home.jumpBackIn.length > 0 ? (
+        <PlayedRail
+          id="jump-heading"
+          title="Jump Back In"
+          note="Recently played"
+          tracks={home.jumpBackIn}
+          meta={(t) => t.artistName}
+          onPlay={onPlay}
+          onOpen={onOpenTrack}
+          onSeeAll={() => onShowTab('jump')}
+        />
+      ) : null}
+
+      {home.onRepeat.length > 0 ? (
+        <PlayedRail
+          id="repeat-heading"
+          title="On Repeat"
+          note="Heavy rotation · last 14 days"
+          tracks={home.onRepeat}
+          meta={(t) =>
+            `${t.recentPlayCount ?? t.playCount} plays recently · ${t.artistName}`
+          }
+          onPlay={onPlay}
+          onOpen={onOpenTrack}
+          onSeeAll={() => onShowTab('repeat')}
+        />
+      ) : null}
+
+      {home.mostPlayed.length > 0 ? (
+        <PlayedRail
+          id="most-heading"
+          title="Most Played"
+          note="All-time from this library"
+          tracks={home.mostPlayed}
+          meta={(t) => `${t.playCount} play${t.playCount === 1 ? '' : 's'} · ${t.artistName}`}
+          onPlay={onPlay}
+          onOpen={onOpenTrack}
+          onSeeAll={() => onShowTab('most')}
+        />
+      ) : homeReady ? (
+        <section className="placeholder gold-frame home-hint">
+          <h2>Play history starts now</h2>
+          <p>
+            Finish a song (or listen 30+ seconds then skip) and Umbrix will fill Most Played, On
+            Repeat, and Jump Back In.
+          </p>
+        </section>
+      ) : null}
+
+      <section className="rail" aria-labelledby="recent-heading">
+        <div className="rail__head">
+          <h2 id="recent-heading">Recently Added</h2>
+          <div className="rail__head-actions">
+            <span>From your library</span>
+            <button type="button" className="rail__link" onClick={() => onShowTab('fresh')}>
+              See all
+            </button>
+          </div>
+        </div>
+        <RailScroller label="Recently Added">
+          {recentTracks.map((track) => (
+            <button
+              key={track.id}
+              type="button"
+              className="card card--button"
+              onClick={() => onPlay(track, recentTracks)}
+              onDoubleClick={() => onOpenTrack(track)}
+            >
+              <CoverArt title={track.title} artworkKey={track.artworkKey} />
+              <h3>{track.title}</h3>
+              <p>{track.artistName}</p>
+            </button>
+          ))}
+        </RailScroller>
+      </section>
+
+      <section className="rail" aria-labelledby="albums-heading">
+        <div className="rail__head">
+          <h2 id="albums-heading">Albums</h2>
+          <span>{albumCount} in library</span>
+        </div>
+        <RailScroller label="Albums">
+          {albums.slice(0, 12).map((album) => (
+            <button
+              key={album.id}
+              type="button"
+              className="card card--button"
+              onClick={() => onOpenAlbum(album.id)}
+              onDoubleClick={() => onOpenAlbum(album.id)}
+            >
+              <div className="card__frame gold-frame">
+                <CoverArt title={album.title} artworkKey={album.artworkKey} tone="dusk" />
+              </div>
+              <h3>{album.title}</h3>
+              <p>
+                {album.artistName}
+                {album.trackCount ? ` · ${album.trackCount}` : ''}
+              </p>
+            </button>
+          ))}
+        </RailScroller>
+      </section>
     </>
   )
 }
@@ -318,32 +494,243 @@ function PlayedRail({
   note,
   tracks,
   meta,
-  onPlay
+  onPlay,
+  onOpen,
+  onSeeAll
 }: {
   id: string
   title: string
   note: string
   tracks: PlayedTrackRow[]
   meta: (track: PlayedTrackRow) => string
-  onPlay: (tracks: TrackRow[]) => void
+  onPlay: (track: PlayedTrackRow, tracks: PlayedTrackRow[]) => void
+  onOpen: (track: PlayedTrackRow) => void
+  onSeeAll?: () => void
 }): React.JSX.Element {
   return (
     <section className="rail" aria-labelledby={id}>
       <div className="rail__head">
         <h2 id={id}>{title}</h2>
-        <span>{note}</span>
+        <div className="rail__head-actions">
+          <span>{note}</span>
+          {onSeeAll ? (
+            <button type="button" className="rail__link" onClick={onSeeAll}>
+              See all
+            </button>
+          ) : null}
+        </div>
       </div>
-      <div className="rail__row">
+      <RailScroller label={title}>
         {tracks.map((track) => (
           <button
             key={track.id}
             type="button"
             className="card card--button"
-            onClick={() => onPlay(tracks)}
+            onClick={() => onPlay(track, tracks)}
+            onDoubleClick={() => onOpen(track)}
           >
             <CoverArt title={track.title} artworkKey={track.artworkKey} />
             <h3>{track.title}</h3>
             <p>{meta(track)}</p>
+          </button>
+        ))}
+      </RailScroller>
+    </section>
+  )
+}
+
+function ShelfPage({
+  title,
+  note,
+  emptyTitle,
+  emptyBody,
+  tracks,
+  meta,
+  onPlay,
+  onOpen
+}: {
+  title: string
+  note: string
+  emptyTitle: string
+  emptyBody: string
+  tracks: PlayedTrackRow[]
+  meta: (track: PlayedTrackRow) => string
+  onPlay: (track: PlayedTrackRow, tracks: PlayedTrackRow[]) => void
+  onOpen: (track: PlayedTrackRow) => void
+}): React.JSX.Element {
+  if (tracks.length === 0) {
+    return (
+      <section className="placeholder gold-frame home-hint">
+        <h2>{emptyTitle}</h2>
+        <p>{emptyBody}</p>
+      </section>
+    )
+  }
+
+  return (
+    <section className="home-shelf" aria-label={title}>
+      <div className="home-shelf__head">
+        <div>
+          <h2>{title}</h2>
+          <p>{note}</p>
+        </div>
+        <button
+          type="button"
+          className="hero__cta"
+          onClick={() => onPlay(tracks[0], tracks)}
+        >
+          Play all
+        </button>
+      </div>
+      <div className="home-shelf__grid">
+        {tracks.map((track, index) => (
+          <button
+            key={track.id}
+            type="button"
+            className="home-shelf__card"
+            onClick={() => onPlay(track, tracks)}
+            onDoubleClick={() => onOpen(track)}
+          >
+            <span className="home-shelf__rank" aria-hidden>
+              {index + 1}
+            </span>
+            <CoverArt title={track.title} artworkKey={track.artworkKey} />
+            <span className="home-shelf__copy">
+              <strong>{track.title}</strong>
+              <span>{meta(track)}</span>
+            </span>
+          </button>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function MixesPage({
+  mixes,
+  homeReady,
+  mixNote,
+  refreshing,
+  onRefresh,
+  onOpen
+}: {
+  mixes: LocalMix[]
+  homeReady: boolean
+  mixNote: string
+  refreshing: boolean
+  onRefresh: () => void
+  onOpen: (mix: LocalMix) => void
+}): React.JSX.Element {
+  if (mixes.length === 0) {
+    return (
+      <section className="placeholder gold-frame home-hint">
+        <h2>{homeReady ? 'Daily Mixes need tags' : 'Building mixes…'}</h2>
+        <p>
+          Umbrix builds mixes like “1990s Hip Hop” from year + genre on your files. Add more tagged
+          tracks, or hit Refresh after a rescan.
+        </p>
+        <button
+          type="button"
+          className="hero__cta hero__cta--ghost"
+          disabled={refreshing}
+          onClick={onRefresh}
+        >
+          {refreshing ? 'Building…' : 'Try building mixes'}
+        </button>
+      </section>
+    )
+  }
+
+  return (
+    <section className="home-shelf" aria-label="Daily Mixes">
+      <div className="home-shelf__head">
+        <div>
+          <h2>Daily Mixes</h2>
+          <p>{mixNote}</p>
+        </div>
+        <button
+          type="button"
+          className="hero__cta hero__cta--ghost"
+          disabled={refreshing}
+          onClick={onRefresh}
+        >
+          {refreshing ? 'Building…' : 'Refresh now'}
+        </button>
+      </div>
+      <div className="home-shelf__mix-grid">
+        {mixes.map((mix) => (
+          <button
+            key={mix.id}
+            type="button"
+            className="mix-card"
+            onClick={() => onOpen(mix)}
+            onDoubleClick={() => onOpen(mix)}
+          >
+            <div className="mix-card__frame">
+              <MixCover mix={mix} />
+              <span
+                className="mix-card__accent"
+                style={{ background: mix.accentColor }}
+                aria-hidden
+              />
+            </div>
+            <div className="mix-card__copy">
+              <h3>{mix.title}</h3>
+              <p>
+                {mix.trackCount} song{mix.trackCount === 1 ? '' : 's'}
+                {mix.subtitle ? ` · ${mix.subtitle}` : ''}
+              </p>
+            </div>
+          </button>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function FreshPage({
+  tracks,
+  onPlay,
+  onOpen
+}: {
+  tracks: TrackRow[]
+  onPlay: (track: TrackRow, list: TrackRow[]) => void
+  onOpen: (track: TrackRow) => void
+}): React.JSX.Element {
+  if (tracks.length === 0) {
+    return (
+      <section className="placeholder gold-frame home-hint">
+        <h2>No fresh finds yet</h2>
+        <p>Import or scan a folder and new arrivals will show up here.</p>
+      </section>
+    )
+  }
+
+  return (
+    <section className="home-shelf" aria-label="Fresh Finds">
+      <div className="home-shelf__head">
+        <div>
+          <h2>Fresh Finds</h2>
+          <p>Recently added to your library</p>
+        </div>
+        <button type="button" className="hero__cta" onClick={() => onPlay(tracks[0], tracks)}>
+          Play all
+        </button>
+      </div>
+      <div className="home-shelf__grid">
+        {tracks.map((track) => (
+          <button
+            key={track.id}
+            type="button"
+            className="home-shelf__card"
+            onClick={() => onPlay(track, tracks)}
+            onDoubleClick={() => onOpen(track)}
+          >
+            <CoverArt title={track.title} artworkKey={track.artworkKey} />
+            <span className="home-shelf__copy">
+              <strong>{track.title}</strong>
+              <span>{track.artistName}</span>
+            </span>
           </button>
         ))}
       </div>

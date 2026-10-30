@@ -9,21 +9,11 @@
     radial-gradient(ellipse at 50% 20%, rgba(123, 77, 184, 0.22), transparent 55%),
     rgba(7, 5, 12, 0.82);
   -webkit-app-region: no-drag;
-  animation: update-dialog-in 220ms var(--ug-ease);
-}
-
-@keyframes update-dialog-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
 }
 
 .update-dialog__panel {
   position: relative;
-  width: min(440px, 100%);
+  width: min(560px, 100%);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -32,88 +22,103 @@
     0 28px 70px rgba(0, 0, 0, 0.62),
     0 0 0 1px rgba(201, 164, 92, 0.22);
   border-radius: 14px;
-  animation: update-dialog-panel-in 280ms var(--ug-ease);
 }
 
-@keyframes update-dialog-panel-in {
-  from {
-    opacity: 0;
-    transform: translateY(10px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.update-dialog__glow {
-  pointer-events: none;
-  position: absolute;
-  inset: -40% -20% auto;
-  height: 70%;
-  background: radial-gradient(circle at 50% 40%, rgba(111, 212, 160, 0.16), transparent 62%);
-  opacity: 0.9;
-}
-
+/* Matches app titlebar brand strip */
 .update-dialog__head {
   position: relative;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 22px 22px 4px;
+  min-height: 64px;
+  padding: 0 16px 0 14px;
+  overflow: hidden;
+  isolation: isolate;
+  border-bottom: 1px solid var(--ug-border-subtle);
+  background:
+    radial-gradient(ellipse at 12% 0%, rgba(123, 77, 184, 0.18), transparent 50%),
+    linear-gradient(180deg, rgba(18, 12, 30, 0.92), rgba(8, 5, 14, 0.96));
+}
+
+.update-dialog__head > :not(.galaxy-sky) {
+  position: relative;
+  z-index: 1;
+}
+
+/* Static chrome — no nebula drift or star twinkle in this modal. */
+.update-dialog__head .galaxy-sky__nebula,
+.update-dialog__head .galaxy-sky__star[data-twinkle='true'],
+.update-dialog__head .galaxy-sky__star--gold[data-twinkle='true'] {
+  animation: none;
 }
 
 .update-dialog__brand {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   min-width: 0;
 }
 
-.update-dialog__logo {
-  width: 56px;
-  height: 56px;
-  object-fit: contain;
+.update-dialog__crest {
+  display: block;
+  width: 44px;
+  height: 44px;
   flex-shrink: 0;
-  filter: drop-shadow(0 6px 16px rgba(123, 77, 184, 0.35));
+  object-fit: contain;
+  border-radius: var(--ug-radius-sm);
+  -webkit-user-drag: none;
+  user-select: none;
 }
 
-.update-dialog__eyebrow {
-  margin: 0 0 4px;
+.update-dialog__name {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35em;
   font-family: var(--ug-font-brand);
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--ug-gold);
+  font-size: 17px;
+  line-height: 1.1;
+  white-space: nowrap;
 }
 
-.update-dialog__head h2 {
+.update-dialog__name-umbrix {
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  background: linear-gradient(180deg, #e2c07a 0%, #c4893f 45%, #9a6b2e 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.update-dialog__name-groove {
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: rgba(200, 188, 220, 0.72);
+}
+
+.update-dialog__body {
+  position: relative;
+  padding: 18px 22px 4px;
+}
+
+.update-dialog__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.update-dialog__title {
   margin: 0;
   font-family: var(--ug-font-brand);
-  font-size: 1.35rem;
-  letter-spacing: 0.03em;
-  color: var(--ug-text);
-}
-
-.update-dialog__close {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  color: var(--ug-text-soft);
-  flex-shrink: 0;
-}
-
-.update-dialog__close:hover {
-  color: var(--ug-text);
-  background: rgba(255, 255, 255, 0.06);
+  font-size: 1.2rem;
+  letter-spacing: 0.08em;
+  color: rgba(210, 198, 228, 0.78);
 }
 
 .update-dialog__version {
-  position: relative;
-  margin: 10px 22px 0;
+  margin: 0;
   width: fit-content;
   padding: 4px 10px;
   border-radius: 999px;
@@ -126,12 +131,15 @@
 }
 
 .update-dialog__message {
-  position: relative;
-  margin: 0;
-  padding: 14px 22px 8px;
-  color: rgba(242, 235, 255, 0.84);
+  margin: 12px 0 0;
+  padding: 14px 16px;
+  border-radius: var(--ug-radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(5, 3, 10, 0.72);
+  color: rgba(200, 188, 220, 0.72);
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.55;
+  letter-spacing: 0.06em;
   white-space: pre-line;
 }
 
@@ -164,24 +172,91 @@
   border-radius: inherit;
   background: linear-gradient(90deg, #4a9a72, var(--ug-control-active-bright));
   box-shadow: 0 0 12px rgba(111, 212, 160, 0.45);
-  transition: width 160ms linear;
 }
 
 .update-dialog__foot {
   position: relative;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   gap: 10px;
   padding: 18px 22px 22px;
 }
 
+.update-dialog__foot:not(:has(.update-dialog__btn--ghost)):not(:has(.update-dialog__btn-hole)) {
+  justify-content: center;
+}
+
 .update-dialog__btn {
-  padding: 10px 20px;
-  border-radius: 999px;
+  padding: 10px 18px;
+  border-radius: var(--ug-radius-sm);
   font: inherit;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   cursor: pointer;
+}
+
+.update-dialog__btn-hole {
+  position: relative;
+  display: block;
+  width: min(220px, 42%);
+  height: 44px;
+  pointer-events: none;
+}
+
+.update-dialog__btn-hole-void {
+  position: absolute;
+  inset: 4px 6px;
+  border-radius: 8px 4px 10px 6px / 6px 10px 4px 8px;
+  border: 1px solid rgba(0, 0, 0, 0.85);
+  background:
+    radial-gradient(circle at 48% 42%, rgba(28, 16, 40, 0.4) 0%, transparent 52%),
+    radial-gradient(circle at 50% 50%, #05030a 0%, #000 72%);
+  box-shadow:
+    inset 0 0 20px rgba(0, 0, 0, 0.98),
+    inset 0 2px 8px rgba(255, 255, 255, 0.03),
+    0 0 0 1px rgba(90, 70, 110, 0.18);
+  clip-path: polygon(
+    0% 18%,
+    8% 0%,
+    22% 10%,
+    34% 2%,
+    48% 12%,
+    62% 0%,
+    78% 8%,
+    92% 2%,
+    100% 20%,
+    96% 42%,
+    100% 68%,
+    90% 100%,
+    72% 92%,
+    58% 100%,
+    42% 90%,
+    28% 100%,
+    12% 88%,
+    0% 100%,
+    4% 70%,
+    0% 48%
+  );
+}
+
+.update-dialog__btn-hole-cracks {
+  position: absolute;
+  inset: -6px -10px;
+  width: calc(100% + 20px);
+  height: calc(100% + 12px);
+  overflow: visible;
+  pointer-events: none;
+}
+
+.update-dialog__btn-hole-cracks path {
+  fill: none;
+  stroke: #000;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.92;
 }
 
 .update-dialog__btn:disabled {
@@ -190,24 +265,34 @@
 }
 
 .update-dialog__btn--ghost {
-  border: 1px solid rgba(242, 235, 255, 0.28);
-  background: transparent;
-  color: rgba(242, 235, 255, 0.9);
+  border: 1px solid var(--ug-border-subtle);
+  background:
+    radial-gradient(ellipse at 12% 0%, rgba(123, 77, 184, 0.14), transparent 55%),
+    linear-gradient(180deg, rgba(18, 12, 30, 0.92), rgba(8, 5, 14, 0.96));
+  color: rgba(200, 188, 220, 0.78);
 }
 
 .update-dialog__btn--ghost:hover:not(:disabled) {
-  border-color: rgba(242, 235, 255, 0.5);
-  background: rgba(7, 5, 12, 0.35);
+  color: var(--ug-gold-bright);
+  border-color: rgba(201, 164, 92, 0.35);
+  background:
+    radial-gradient(ellipse at 12% 0%, rgba(123, 77, 184, 0.22), transparent 55%),
+    linear-gradient(180deg, rgba(22, 14, 36, 0.96), rgba(10, 6, 18, 0.98));
 }
 
 .update-dialog__btn--solid {
-  border: 1px solid rgba(201, 164, 92, 0.45);
-  background: linear-gradient(180deg, #e8c878, #c9a45c);
-  color: #1a1208;
-  box-shadow: 0 6px 18px rgba(201, 164, 92, 0.22);
+  border: 1px solid rgba(201, 164, 92, 0.35);
+  background:
+    radial-gradient(ellipse at 12% 0%, rgba(123, 77, 184, 0.28), transparent 50%),
+    linear-gradient(180deg, rgba(74, 40, 120, 0.95), rgba(28, 14, 52, 0.98));
+  color: rgba(210, 198, 228, 0.92);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .update-dialog__btn--solid:hover:not(:disabled) {
-  filter: brightness(1.05);
-  transform: translateY(-1px);
+  color: var(--ug-gold-bright);
+  border-color: rgba(201, 164, 92, 0.5);
+  background:
+    radial-gradient(ellipse at 12% 0%, rgba(123, 77, 184, 0.36), transparent 50%),
+    linear-gradient(180deg, rgba(88, 48, 140, 0.98), rgba(34, 16, 60, 1));
 }

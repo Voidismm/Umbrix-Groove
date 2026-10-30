@@ -11,21 +11,25 @@ import {
   PlaylistsPage,
   SongsPage
 } from '@renderer/pages'
+import { CandyScroll } from '../ui/CandyScroll'
+import { VisualizerErrorBoundary } from '../ui/VisualizerErrorBoundary'
 import './CenterWorkspace.css'
 
 /** Center pane — picks which page to show from the left sidebar. */
 export function CenterWorkspace(): React.JSX.Element {
   const { activeNav } = useLibrary()
-  const { visualizerOpen } = usePlayback()
+  const { visualizerOpen, setVisualizerOpen } = usePlayback()
 
   return (
     <main className="center gold-frame" aria-label="Main content">
       {visualizerOpen ? (
         <div className="center__viz">
-          <VisualizerStage />
+          <VisualizerErrorBoundary onError={() => setVisualizerOpen(false)}>
+            <VisualizerStage />
+          </VisualizerErrorBoundary>
         </div>
       ) : (
-        <div className="center__scroll">
+        <CandyScroll className="center__scroll" label="Scroll main content">
           <ScanBanner />
 
           {activeNav === 'home' && <HomePage />}
@@ -37,7 +41,7 @@ export function CenterWorkspace(): React.JSX.Element {
           {activeNav === 'playlists' && <PlaylistsPage />}
           {activeNav === 'lyrics' && <LyricsPage />}
           {activeNav === 'browse' && <BrowsePage />}
-        </div>
+        </CandyScroll>
       )}
     </main>
   )

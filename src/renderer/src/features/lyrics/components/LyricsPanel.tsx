@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { LyricsPayload } from '@shared/types'
-import { usePlayback } from '@renderer/features/player'
+import { usePlayback, usePlaybackClock } from '@renderer/features/player'
 import { useSettings } from '@renderer/features/settings'
 import './LyricsPanel.css'
 
@@ -46,7 +46,8 @@ export function LyricsPanel({ variant = 'sidebar' }: LyricsPanelProps): React.JS
 
 /** Fetches and syncs lyrics — only mounted while the user has opted in. */
 function LyricsPanelActive({ variant }: { variant: 'sidebar' | 'stage' }): React.JSX.Element {
-  const { currentTrack, focusedTrack, currentTime } = usePlayback()
+  const { currentTrack, focusedTrack } = usePlayback()
+  const currentTime = usePlaybackClock()
   const track = focusedTrack ?? currentTrack
   const { settings } = useSettings()
   const [lyrics, setLyrics] = useState<LyricsPayload | null>(null)

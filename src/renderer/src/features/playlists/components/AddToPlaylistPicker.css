@@ -1,4 +1,4 @@
-.add-to-playlist-picker {
+﻿.add-to-playlist-picker {
   display: flex;
   flex-direction: column;
   width: min(260px, calc(100vw - 16px));
@@ -46,7 +46,7 @@
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: rgba(242, 235, 255, 0.92);
+  color: rgba(210, 198, 228, 0.88);
   font: inherit;
   font-size: 13px;
   text-align: left;
@@ -62,7 +62,7 @@
 
 .add-to-playlist-picker__row:hover {
   background: rgba(123, 77, 184, 0.28);
-  color: #fff;
+  color: #d4c8e6;
 }
 
 .add-to-playlist-picker__row--action {

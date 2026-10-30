@@ -1,48 +1,40 @@
 import { CoverArt, TrackTable, useLibrary } from '@renderer/features/library'
+import { LibraryBrowseShell } from './LibraryBrowseShell'
 
-/** Album grid and album detail track list. */
+/** Album grid and album detail — same library banner chrome as All Songs. */
 export function AlbumsPage(): React.JSX.Element {
-  const {
-    albums,
-    tracks,
-    trackTotal,
-    selectedAlbumId,
-    selectAlbum
-  } = useLibrary()
+  const { albums, tracks, trackTotal, selectedAlbumId, selectAlbum, searchQuery } = useLibrary()
 
   const selectedAlbum = albums.find((album) => album.id === selectedAlbumId) ?? null
 
   if (selectedAlbum) {
     return (
-      <section className="view">
-        <header className="view__head view__head--row">
-          <div>
-            <button type="button" className="linkish" onClick={() => selectAlbum(null)}>
-              ← All albums
-            </button>
-            <h2>{selectedAlbum.title}</h2>
-            <p>
-              {selectedAlbum.artistName}
-              {selectedAlbum.year ? ` · ${selectedAlbum.year}` : ''} · {selectedAlbum.trackCount}{' '}
-              tracks
-            </p>
-          </div>
-          <div className="view__art gold-frame">
-            <CoverArt title={selectedAlbum.title} artworkKey={selectedAlbum.artworkKey} />
-          </div>
-        </header>
+      <LibraryBrowseShell
+        title={selectedAlbum.title}
+        description={`${selectedAlbum.artistName}${selectedAlbum.year ? ` · ${selectedAlbum.year}` : ''}`}
+        metaPrimary={`${selectedAlbum.trackCount} track${selectedAlbum.trackCount === 1 ? '' : 's'}`}
+        icon="album"
+        artItems={[selectedAlbum]}
+      >
+        <div className="library-browse__toolbar">
+          <button type="button" className="linkish" onClick={() => selectAlbum(null)}>
+            ← All albums
+          </button>
+        </div>
         <TrackTable tracks={tracks} total={trackTotal} showSort={false} />
-      </section>
+      </LibraryBrowseShell>
     )
   }
 
   return (
-    <section className="view">
-      <header className="view__head">
-        <h2>Albums</h2>
-        <p>{albums.length} albums</p>
-      </header>
-      <div className="grid-cards">
+    <LibraryBrowseShell
+      title="All Albums"
+      description={searchQuery ? `Results for “${searchQuery}”` : null}
+      metaPrimary={`${albums.length} album${albums.length === 1 ? '' : 's'}`}
+      icon="album"
+      artItems={albums}
+    >
+      <div className="grid-cards library-browse__grid">
         {albums.map((album) => (
           <button
             key={album.id}
@@ -61,6 +53,6 @@ export function AlbumsPage(): React.JSX.Element {
           </button>
         ))}
       </div>
-    </section>
+    </LibraryBrowseShell>
   )
 }

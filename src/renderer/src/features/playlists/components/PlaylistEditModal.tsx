@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import type { PlaylistSummary, TrackRow } from '@shared/types'
 import { artworkUrl } from '@renderer/lib/format'
 import {
@@ -7,7 +7,10 @@ import {
   normalizeHexColor,
   playlistBannerStyle
 } from '@renderer/lib/playlistAccent'
+import { GrooveColorPicker } from '@renderer/components/ui/GrooveColorPicker'
 import { Icon } from '@renderer/components/ui/Icon'
+import { ModalHeader } from '@renderer/components/ui/ModalHeader'
+import '@renderer/components/ui/ModalChrome.css'
 import './PlaylistEditModal.css'
 
 type PlaylistEditModalProps = {
@@ -107,8 +110,8 @@ export function PlaylistEditModal({
 
   if (!open) return null
 
-  const displayName =
-    playlist.systemKey === 'liked' || playlist.name === 'Liked Songs' ? 'Loved Songs' : name
+  const isLoved = playlist.systemKey === 'liked' || playlist.name === 'Liked Songs'
+  const displayName = isLoved ? 'Loved Songs' : name
 
   const liveAccent =
     accentMode === 'custom'
@@ -151,72 +154,89 @@ export function PlaylistEditModal({
         aria-labelledby="playlist-edit-title"
         onClick={(event) => event.stopPropagation()}
       >
-        <header className="playlist-edit__head">
-          <h2 id="playlist-edit-title">Edit details</h2>
-          <button type="button" className="playlist-edit__close" aria-label="Close" onClick={onClose}>
-            <Icon name="close" size={16} />
-          </button>
-        </header>
+        <ModalHeader
+          title="Edit details"
+          titleId="playlist-edit-title"
+          seed={23}
+          onClose={onClose}
+          closeDisabled={saving}
+        />
 
         <div className="playlist-edit__body">
           <div className="playlist-edit__cover-wrap">
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif,image/bmp,.jpg,.jpeg,.png,.webp,.gif,.bmp"
-              className="playlist-edit__file"
-              onChange={onFileChange}
-            />
-            <button
-              type="button"
-              className="playlist-edit__cover"
-              aria-label="Choose custom cover"
-              disabled={coverBusy}
-              onClick={pickCover}
-            >
-              {customCover ? (
-                <img src={artworkUrl(customCover) ?? undefined} alt="" />
-              ) : art.length >= 4 ? (
-                <div className="playlist-edit__collage">
-                  {art.map((key) => (
-                    <img key={key} src={artworkUrl(key) ?? undefined} alt="" />
-                  ))}
+            {isLoved ? (
+              <>
+                <div className="playlist-edit__cover playlist-edit__cover--loved" aria-hidden>
+                  <span
+                    className="ug-candy-heart ug-candy-heart--art ug-candy-heart--art-plain"
+                    style={{ '--ug-candy-heart-size': '58px' } as CSSProperties}
+                  />
                 </div>
-              ) : art[0] ? (
-                <img src={artworkUrl(art[0]) ?? undefined} alt="" />
-              ) : (
-                <Icon name={playlist.isSystem ? 'heart-filled' : 'create-playlist'} size={40} />
-              )}
-              <div className="playlist-edit__cover-hint">
-                <Icon name="edit" size={18} />
-                <span>{coverBusy ? 'Updating…' : 'Choose photo'}</span>
-              </div>
-            </button>
-            {customCover ? (
-              <button
-                type="button"
-                className="playlist-edit__cover-reset"
-                disabled={coverBusy}
-                onClick={() => {
-                  void (async () => {
-                    setCoverBusy(true)
-                    setCoverError(null)
-                    try {
-                      await onClearCover()
-                    } catch (err) {
-                      setCoverError(err instanceof Error ? err.message : String(err))
-                    } finally {
-                      setCoverBusy(false)
-                    }
-                  })()
-                }}
-              >
-                Use covers from tracks
-              </button>
+                <p className="playlist-edit__cover-note">Loved Songs always uses this heart</p>
+              </>
             ) : (
-              <p className="playlist-edit__cover-note">Auto collage from the first tracks with art</p>
+              <>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif,image/bmp,.jpg,.jpeg,.png,.webp,.gif,.bmp"
+                  className="playlist-edit__file"
+                  onChange={onFileChange}
+                />
+                <button
+                  type="button"
+                  className="playlist-edit__cover"
+                  aria-label="Choose custom cover"
+                  disabled={coverBusy}
+                  onClick={pickCover}
+                >
+                  {customCover ? (
+                    <img src={artworkUrl(customCover) ?? undefined} alt="" />
+                  ) : art.length >= 4 ? (
+                    <div className="playlist-edit__collage">
+                      {art.map((key) => (
+                        <img key={key} src={artworkUrl(key) ?? undefined} alt="" />
+                      ))}
+                    </div>
+                  ) : art[0] ? (
+                    <img src={artworkUrl(art[0]) ?? undefined} alt="" />
+                  ) : (
+                    <Icon name="create-playlist" size={40} />
+                  )}
+                  <div className="playlist-edit__cover-hint">
+                    <Icon name="edit" size={18} />
+                    <span>{coverBusy ? 'Updating…' : 'Choose photo'}</span>
+                  </div>
+                </button>
+                {customCover ? (
+                  <button
+                    type="button"
+                    className="playlist-edit__cover-reset"
+                    disabled={coverBusy}
+                    onClick={() => {
+                      void (async () => {
+                        setCoverBusy(true)
+                        setCoverError(null)
+                        try {
+                          await onClearCover()
+                        } catch (err) {
+                          setCoverError(err instanceof Error ? err.message : String(err))
+                        } finally {
+                          setCoverBusy(false)
+                        }
+                      })()
+                    }}
+                  >
+                    Use covers from tracks
+                  </button>
+                ) : (
+                  <p className="playlist-edit__cover-note">
+                    Auto collage from the first tracks with art
+                  </p>
+                )}
+                {coverError ? <p className="playlist-edit__cover-error">{coverError}</p> : null}
+              </>
             )}
-            {coverError ? <p className="playlist-edit__cover-error">{coverError}</p> : null}
           </div>
 
           <div className="playlist-edit__fields">
@@ -247,18 +267,15 @@ export function PlaylistEditModal({
                 <div className="playlist-edit__accent-swatch" style={swatchStyle} aria-hidden />
               </div>
               <div className="playlist-edit__accent-row">
-                <label className="playlist-edit__accent-pick">
-                  <input
-                    type="color"
-                    value={normalizeHexColor(accentDraft) ?? DEFAULT_PLAYLIST_ACCENT}
-                    disabled={saving}
-                    onChange={(event) => {
-                      setAccentMode('custom')
-                      setAccentDraft(event.target.value)
-                    }}
-                  />
-                  <span>Custom color</span>
-                </label>
+                <GrooveColorPicker
+                  label="Custom color"
+                  value={normalizeHexColor(accentDraft) ?? DEFAULT_PLAYLIST_ACCENT}
+                  disabled={saving}
+                  onChange={(hex) => {
+                    setAccentMode('custom')
+                    setAccentDraft(hex)
+                  }}
+                />
                 <input
                   type="text"
                   className="playlist-edit__accent-hex"
@@ -290,7 +307,7 @@ export function PlaylistEditModal({
         <footer className="playlist-edit__foot">
           <button
             type="button"
-            className="playlist-edit__save"
+            className="ug-modal__btn ug-modal__btn--solid"
             disabled={
               saving ||
               (!playlist.isSystem && !name.trim()) ||

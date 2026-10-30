@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import type { PlaylistSummary } from '@shared/types'
 import { artworkUrl } from '@renderer/lib/format'
 import { Icon } from '@renderer/components/ui/Icon'
@@ -10,6 +11,10 @@ type PlaylistCoverThumbProps = {
   fill?: boolean
 }
 
+function isLovedSongs(playlist?: PlaylistSummary): boolean {
+  return playlist?.systemKey === 'liked' || playlist?.name === 'Liked Songs'
+}
+
 /** Playlist art — custom cover, else track collage / first art, else icon. */
 export function PlaylistCoverThumb({
   playlist,
@@ -18,17 +23,34 @@ export function PlaylistCoverThumb({
 }: PlaylistCoverThumbProps): React.JSX.Element {
   const custom = artworkUrl(playlist?.coverKey)
   const keys = playlist?.coverArtKeys ?? []
-  const system = !!playlist?.isSystem
+  const loved = isLovedSongs(playlist)
   const className = [
     'playlist-cover',
     fill ? 'playlist-cover--fill' : '',
-    keys.length >= 4 && !custom ? 'playlist-cover--collage' : '',
-    !custom && keys.length === 0 ? 'playlist-cover--fallback' : ''
+    loved ? 'playlist-cover--loved' : '',
+    !loved && keys.length >= 4 && !custom ? 'playlist-cover--collage' : '',
+    !loved && !custom && keys.length === 0 ? 'playlist-cover--fallback' : ''
   ]
     .filter(Boolean)
     .join(' ')
   const style = fill ? undefined : { width: size, height: size }
   const iconSize = fill ? 48 : Math.max(12, size * 0.45)
+  /* Sidebar thumbs stay larger with gold rim; grid fill is smaller and plain. */
+  const heartSize = fill ? 48 : Math.max(18, Math.round(size * 0.72))
+  const heartClass = fill
+    ? 'ug-candy-heart ug-candy-heart--art ug-candy-heart--art-plain'
+    : 'ug-candy-heart ug-candy-heart--art'
+
+  if (loved) {
+    return (
+      <span className={className} style={style} aria-hidden>
+        <span
+          className={heartClass}
+          style={{ '--ug-candy-heart-size': `${heartSize}px` } as CSSProperties}
+        />
+      </span>
+    )
+  }
 
   if (custom) {
     return (
@@ -58,7 +80,7 @@ export function PlaylistCoverThumb({
 
   return (
     <span className={className} style={style} aria-hidden>
-      <Icon name={system ? 'heart-filled' : 'create-playlist'} size={iconSize} />
+      <Icon name="create-playlist" size={iconSize} />
     </span>
   )
 }

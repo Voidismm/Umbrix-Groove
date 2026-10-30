@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
-import { Icon } from './Icon'
+import { ModalHeader } from './ModalHeader'
+import './ModalChrome.css'
 import './ConfirmDialog.css'
 
 export type ConfirmDialogProps = {
@@ -10,6 +11,8 @@ export type ConfirmDialogProps = {
   cancelLabel?: string
   danger?: boolean
   busy?: boolean
+  /** Optional content between the message and footer (toggle, link, etc.). */
+  extra?: React.ReactNode
   onConfirm: () => void
   onCancel: () => void
 }
@@ -23,6 +26,7 @@ export function ConfirmDialog({
   cancelLabel = 'Cancel',
   danger = true,
   busy = false,
+  extra,
   onConfirm,
   onCancel
 }: ConfirmDialogProps): React.JSX.Element | null {
@@ -47,25 +51,23 @@ export function ConfirmDialog({
         aria-describedby="confirm-dialog-message"
         onClick={(event) => event.stopPropagation()}
       >
-        <header className="confirm-dialog__head">
-          <h2 id="confirm-dialog-title">{title}</h2>
-          <button
-            type="button"
-            className="confirm-dialog__close"
-            aria-label="Close"
-            disabled={busy}
-            onClick={onCancel}
-          >
-            <Icon name="close" size={16} />
-          </button>
-        </header>
-        <p id="confirm-dialog-message" className="confirm-dialog__message">
-          {message}
-        </p>
+        <ModalHeader
+          title={title}
+          titleId="confirm-dialog-title"
+          seed={17}
+          onClose={onCancel}
+          closeDisabled={busy}
+        />
+        <div className="confirm-dialog__body">
+          <p id="confirm-dialog-message" className="confirm-dialog__message">
+            {message}
+          </p>
+          {extra ? <div className="confirm-dialog__extra">{extra}</div> : null}
+        </div>
         <footer className="confirm-dialog__foot">
           <button
             type="button"
-            className="confirm-dialog__btn confirm-dialog__btn--ghost"
+            className="ug-modal__btn ug-modal__btn--ghost"
             disabled={busy}
             onClick={onCancel}
           >
@@ -73,9 +75,7 @@ export function ConfirmDialog({
           </button>
           <button
             type="button"
-            className={`confirm-dialog__btn confirm-dialog__btn--solid${
-              danger ? ' is-danger' : ''
-            }`}
+            className={`ug-modal__btn ug-modal__btn--solid${danger ? ' is-danger' : ''}`}
             disabled={busy}
             onClick={onConfirm}
           >

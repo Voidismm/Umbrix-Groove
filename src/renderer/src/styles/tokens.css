@@ -24,11 +24,11 @@
   --ug-control-danger: #e23b4c;
   --ug-control-danger-bright: #ff2d45;
 
-  /* Text */
-  --ug-text: #f2ebff;
-  --ug-text-soft: #c8bdd9;
-  --ug-text-muted: #8a7fa0;
-  --ug-text-faint: #5c536e;
+  /* Text — soft lavender, not near-white */
+  --ug-text: #d2c6e4;
+  --ug-text-soft: #b4a7c6;
+  --ug-text-muted: #8f84a3;
+  --ug-text-faint: #6a617c;
 
   /* Borders */
   --ug-border: rgba(201, 164, 92, 0.35);
@@ -42,7 +42,7 @@
   --ug-font-literary: var(--ug-font-body);
 
   /* Layout */
-  --ug-titlebar-h: 50px;
+  --ug-titlebar-h: 72px;
   --ug-footer-h: 92px;
   --ug-sidebar-left: 268px;
   --ug-sidebar-right: 300px;

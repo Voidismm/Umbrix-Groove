@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import {
   PlaylistAddTracksModal,
   PlaylistCoverThumb,
@@ -165,6 +165,8 @@ export function PlaylistsPage(): React.JSX.Element {
   }
 
   const title = playlistTitle(selectedPlaylist.name, selectedPlaylist.systemKey)
+  const isLoved =
+    selectedPlaylist.systemKey === 'liked' || selectedPlaylist.name === 'Liked Songs'
   const lengthLabel = formatPlaylistLength(selectedPlaylist.totalDurationMs)
   const songLabel = `${selectedPlaylist.trackCount} song${selectedPlaylist.trackCount === 1 ? '' : 's'}`
 
@@ -182,21 +184,27 @@ export function PlaylistsPage(): React.JSX.Element {
         <div className="playlists-page__detail-main">
           <div
             className={`playlists-page__cover${
-              !customCover && artKeys.length >= 4 ? ' is-collage' : ''
+              isLoved
+                ? ' is-loved'
+                : !customCover && artKeys.length >= 4
+                  ? ' is-collage'
+                  : ''
             }`}
             aria-hidden
           >
-            {customCover ? (
+            {isLoved ? (
+              <span
+                className="ug-candy-heart ug-candy-heart--art ug-candy-heart--art-plain"
+                style={{ '--ug-candy-heart-size': '78px' } as CSSProperties}
+              />
+            ) : customCover ? (
               <img src={artworkUrl(customCover) ?? undefined} alt="" />
             ) : artKeys.length >= 4 ? (
               artKeys.map((key) => <img key={key} src={artworkUrl(key) ?? undefined} alt="" />)
             ) : artKeys[0] ? (
               <img src={artworkUrl(artKeys[0]) ?? undefined} alt="" />
             ) : (
-              <Icon
-                name={selectedPlaylist.isSystem ? 'heart-filled' : 'create-playlist'}
-                size={56}
-              />
+              <Icon name="create-playlist" size={56} />
             )}
           </div>
 
@@ -226,6 +234,7 @@ export function PlaylistsPage(): React.JSX.Element {
             className="playlists-page__play"
             disabled={selectedTracks.length === 0}
             aria-label={`Play ${title}`}
+            data-no-groove-tip
             onClick={() => {
               if (selectedTracks[0]) playTrack(selectedTracks[0], selectedTracks)
             }}

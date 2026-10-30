@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import logoUrl from '@renderer/assets/umbrix-groove-logo.png'
-import { Icon } from './Icon'
+import logoUrl from '@renderer/assets/logi idea 2.png'
+import { GalaxySky } from './GalaxySky'
 import './UpdateDialog.css'
 
 export type UpdatePhase = 'available' | 'downloading' | 'ready' | 'error' | null
@@ -21,6 +21,13 @@ export function UpdateDialog({
   onAccept,
   onDismiss
 }: UpdateDialogProps): React.JSX.Element | null {
+  /** 0 = offer, 1 = pout, 2 = button confiscated (black hole). */
+  const [declineStep, setDeclineStep] = useState(0)
+
+  useEffect(() => {
+    setDeclineStep(0)
+  }, [phase])
+
   useEffect(() => {
     if (!phase || phase === 'downloading') return
     const onKey = (event: KeyboardEvent): void => {
@@ -34,36 +41,53 @@ export function UpdateDialog({
 
   const title =
     phase === 'available'
-      ? version
-        ? `Umbrix Groove ${version}`
-        : 'Update available'
+      ? 'Update available'
       : phase === 'downloading'
         ? 'Downloading update'
         : phase === 'ready'
           ? 'Ready to install'
           : 'Update failed'
 
+  const availableBody =
+    declineStep === 1
+      ? 'But... the update I worked so hard on... :('
+      : declineStep >= 2
+        ? "Well then I'm taking away your button. Now you can only install it, hmph."
+        : "A new update for Umbrix Groove is available!\n\nYou can update it now, or later, I don't care, I'm not your fuckin' mother. But if I was, I'd tell you to update your Umbrix Groove or you won't get any cool new things and bug fixes. Nor will you get any desert after dinner."
+
   const body =
     phase === 'available'
-      ? version
-        ? `Update ${version} is ready.`
-        : 'An update is ready.'
+      ? availableBody
       : phase === 'downloading'
-        ? "Reaching into the Void for this fuckin' update…"
+        ? percent >= 100
+          ? 'FINALLY...'
+          : percent >= 90
+            ? 'Come on already.'
+            : percent >= 50
+              ? "Fuckin' hells this is a big update, huh?"
+              : "Reaching into the Void for this fuckin' update…"
         : phase === 'ready'
-          ? 'Download finished. Restart Umbrix Groove to finish installing.'
-          : 'Update failed.\n\nPlease try again later.'
+          ? 'The download is finally finished. Restart Umbrix Groove.'
+          : "Update failed, and I have no fuckin' idea why. Could be anything honestly.\n\nPlease try again later or something."
 
   const confirmLabel =
     phase === 'available'
-      ? 'Install'
+      ? "Alright, I'll install it, damn."
       : phase === 'ready'
-        ? 'Restart now'
+        ? 'Fuck yeah.'
         : phase === 'error'
-          ? 'Close'
+          ? 'Fucking shit-ass fuck-ass titties.'
           : null
 
-  const cancelLabel = phase === 'downloading' ? null : phase === 'error' ? null : 'Later'
+  const cancelLabel =
+    phase !== 'available'
+      ? null
+      : declineStep === 0
+        ? 'No thanks, fam. Maybe later.'
+        : declineStep === 1
+          ? 'I said no, you little weirdo.'
+          : null
+  const showDeclineHole = phase === 'available' && declineStep >= 2
   const busy = phase === 'downloading'
 
   return (
@@ -82,41 +106,37 @@ export function UpdateDialog({
         aria-describedby="update-dialog-message"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="update-dialog__glow" aria-hidden />
         <header className="update-dialog__head">
-          <div className="update-dialog__brand">
-            <img src={logoUrl} alt="" className="update-dialog__logo" />
-            <div>
-              <p className="update-dialog__eyebrow">Umbrix Groove</p>
-              <h2 id="update-dialog-title">{title}</h2>
-            </div>
+          <GalaxySky variant="chrome" seed={11} />
+          <div className="update-dialog__brand" aria-label="Umbrix Groove">
+            <img src={logoUrl} alt="" className="update-dialog__crest" draggable={false} />
+            <span className="update-dialog__name">
+              <span className="update-dialog__name-umbrix">Umbrix</span>
+              <span className="update-dialog__name-groove">Groove</span>
+            </span>
           </div>
-          {!busy ? (
-            <button
-              type="button"
-              className="update-dialog__close"
-              aria-label="Close"
-              onClick={onDismiss}
-            >
-              <Icon name="close" size={16} />
-            </button>
-          ) : null}
         </header>
 
-        {version && phase !== 'error' && phase !== 'available' ? (
-          <p className="update-dialog__version">v{version}</p>
-        ) : null}
-
-        <p
-          id="update-dialog-message"
-          className={
-            phase === 'error'
-              ? 'update-dialog__message update-dialog__message--error'
-              : 'update-dialog__message'
-          }
-        >
-          {body}
-        </p>
+        <div className="update-dialog__body">
+          <div className="update-dialog__title-row">
+            <h2 id="update-dialog-title" className="update-dialog__title">
+              {title}
+            </h2>
+            {version && phase !== 'error' ? (
+              <p className="update-dialog__version">v{version}</p>
+            ) : null}
+          </div>
+          <p
+            id="update-dialog-message"
+            className={
+              phase === 'error'
+                ? 'update-dialog__message update-dialog__message--error'
+                : 'update-dialog__message'
+            }
+          >
+            {body}
+          </p>
+        </div>
 
         {phase === 'downloading' ? (
           <div className="update-dialog__progress" aria-label={`Download ${Math.round(percent)} percent`}>
@@ -136,10 +156,26 @@ export function UpdateDialog({
               type="button"
               className="update-dialog__btn update-dialog__btn--ghost"
               disabled={busy}
-              onClick={onDismiss}
+              onClick={() => setDeclineStep((step) => Math.min(2, step + 1))}
             >
               {cancelLabel}
             </button>
+          ) : null}
+          {showDeclineHole ? (
+            <span className="update-dialog__btn-hole" aria-hidden>
+              <span className="update-dialog__btn-hole-void" />
+              <svg className="update-dialog__btn-hole-cracks" viewBox="0 0 220 56" preserveAspectRatio="none">
+                <path d="M18 8 L34 20 L28 14 L48 26" />
+                <path d="M6 28 L22 30 L14 36 L30 40" />
+                <path d="M52 4 L58 16 L70 10 L76 22 L88 14" />
+                <path d="M110 2 L108 14 L118 18 L112 28" />
+                <path d="M160 6 L148 18 L168 16 L154 30 L172 28" />
+                <path d="M200 10 L186 22 L204 26 L190 38" />
+                <path d="M212 30 L196 34 L208 42 L184 46" />
+                <path d="M40 48 L56 42 L62 50 L78 44" />
+                <path d="M130 50 L142 40 L150 52 L164 44" />
+              </svg>
+            </span>
           ) : null}
           {confirmLabel ? (
             <button

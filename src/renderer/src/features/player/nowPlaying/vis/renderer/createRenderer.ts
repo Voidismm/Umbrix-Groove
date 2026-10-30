@@ -26,6 +26,12 @@ export function fitRenderer(
   const w = Math.max(1, Math.floor(width));
   const h = Math.max(1, Math.floor(height));
   renderer.setPixelRatio(dpr);
+  // Keep CSS at 100% of the viewport — fixed px styles leave a dead strip on the right.
   renderer.setSize(w, h, false);
+  const canvas = renderer.domElement;
+  canvas.style.width = "100%";
+  canvas.style.height = "100%";
+  canvas.style.maxWidth = "none";
+  canvas.style.maxHeight = "none";
   return { w: Math.floor(w * dpr), h: Math.floor(h * dpr) };
 }

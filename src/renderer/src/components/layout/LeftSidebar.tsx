@@ -1,12 +1,16 @@
 import { useState } from 'react'
 import { NAV_ITEMS } from '@renderer/app/navigation'
 import { useLibrary } from '@renderer/features/library'
+import { usePlayback } from '@renderer/features/player'
+import { useSettings } from '@renderer/features/settings'
 import {
   PlaylistContextMenu,
   PlaylistTree,
   usePlaylists,
   type PlaylistMenuItem
 } from '@renderer/features/playlists'
+import { CandyScroll } from '../ui/CandyScroll'
+import { GalaxySky } from '../ui/GalaxySky'
 import { Icon } from '../ui/Icon'
 import './LeftSidebar.css'
 
@@ -32,6 +36,8 @@ export function LeftSidebar({ collapsed = false }: LeftSidebarProps): React.JSX.
     rescanAll
   } = useLibrary()
   const { selectPlaylist } = usePlaylists()
+  const { setVisualizerOpen } = usePlayback()
+  const { settings } = useSettings()
   const [navMenu, setNavMenu] = useState<NavMenuState | null>(null)
 
   const songCount = summary.trackCount
@@ -41,6 +47,9 @@ export function LeftSidebar({ collapsed = false }: LeftSidebarProps): React.JSX.
       className={`left-sidebar gold-frame${collapsed ? ' is-collapsed' : ''}`}
       aria-label="Library navigation"
     >
+      {settings.appearance.galaxyChrome !== false ? (
+        <GalaxySky variant="chrome" seed={47} />
+      ) : null}
       <nav className="left-sidebar__nav">
         {NAV_ITEMS.map((item) => {
           const isSongs = item.id === 'songs'
@@ -50,13 +59,17 @@ export function LeftSidebar({ collapsed = false }: LeftSidebarProps): React.JSX.
               key={item.id}
               type="button"
               className={`left-sidebar__nav-item${
-                activeNav === item.id || (item.id === 'home' && activeNav === 'daily-mix')
+                activeNav === item.id ||
+                (item.id === 'home' && activeNav === 'daily-mix') ||
+                (item.id === 'songs' &&
+                  (activeNav === 'albums' || activeNav === 'artists'))
                   ? ' is-active'
                   : ''
               }`}
               data-tip={tip}
               aria-label={isSongs ? `${item.label}, ${songCount} songs` : item.label}
               onClick={() => {
+                setVisualizerOpen(false)
                 selectAlbum(null)
                 selectArtist(null)
                 selectGenre(null)
@@ -114,9 +127,9 @@ export function LeftSidebar({ collapsed = false }: LeftSidebarProps): React.JSX.
             </span>
           </div>
         )}
-        <div className="left-sidebar__tree">
+        <CandyScroll className="left-sidebar__tree" label="Scroll playlists">
           <PlaylistTree compact={collapsed} />
-        </div>
+        </CandyScroll>
       </div>
     </aside>
   )

@@ -151,3 +151,24 @@ export interface AddFolderResult {
   cancelled: boolean
   alreadyExists?: boolean
 }
+
+/** Library-only metadata edit — does not rewrite audio file tags. */
+export interface TrackMetadataPatch {
+  title: string
+  artistName: string
+  albumTitle: string
+  trackNumber: number | null
+  discNumber: number | null
+  year: number | null
+  genre: string | null
+  /**
+   * undefined = leave cover; null = clear cover;
+   * { data, mime } = replace cover in the app artwork cache.
+   */
+  artwork?: { data: ArrayBuffer; mime: string } | null
+  /**
+   * undefined = leave lyrics override; null or empty = clear override;
+   * string = set library lyrics override (shown in-app only).
+   */
+  lyricsText?: string | null
+}

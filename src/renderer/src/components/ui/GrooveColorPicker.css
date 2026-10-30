@@ -1,0 +1,205 @@
+.groove-color {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.groove-color__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 8px 12px 8px 8px;
+  border: 1px solid rgba(201, 164, 92, 0.28);
+  border-radius: 8px;
+  background:
+    radial-gradient(ellipse at 12% 0%, rgba(123, 77, 184, 0.16), transparent 55%),
+    linear-gradient(180deg, rgba(48, 36, 72, 0.98), rgba(28, 20, 46, 0.98));
+  color: var(--ug-text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.groove-color__trigger:hover:not(:disabled) {
+  border-color: rgba(201, 164, 92, 0.48);
+  color: var(--ug-gold-bright);
+}
+
+.groove-color__trigger:focus-visible {
+  outline: 1px solid rgba(201, 164, 92, 0.55);
+  outline-offset: 1px;
+}
+
+.groove-color__trigger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.groove-color__trigger.is-open {
+  border-color: rgba(201, 164, 92, 0.55);
+  color: var(--ug-gold-bright);
+}
+
+.groove-color__chip {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 7px;
+  border: 1px solid rgba(242, 235, 255, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+
+.groove-color__label {
+  white-space: nowrap;
+}
+
+.groove-color__panel {
+  position: fixed;
+  z-index: 210;
+  width: min(280px, calc(100vw - 24px));
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(201, 164, 92, 0.32);
+  background:
+    radial-gradient(ellipse at 10% 0%, rgba(123, 77, 184, 0.24), transparent 48%),
+    linear-gradient(180deg, #241832 0%, #120c1c 100%);
+  box-shadow:
+    0 22px 50px rgba(0, 0, 0, 0.58),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  -webkit-app-region: no-drag;
+}
+
+.groove-color__presets {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.groove-color__preset {
+  width: 100%;
+  aspect-ratio: 1;
+  margin: 0;
+  padding: 0;
+  border-radius: 6px;
+  border: 1px solid rgba(242, 235, 255, 0.12);
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
+}
+
+.groove-color__preset:hover,
+.groove-color__preset.is-selected {
+  border-color: rgba(232, 200, 120, 0.75);
+  box-shadow:
+    0 0 0 1px rgba(232, 200, 120, 0.35),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+
+.groove-color__sv {
+  position: relative;
+  width: 100%;
+  height: 140px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(201, 164, 92, 0.22);
+  cursor: crosshair;
+  touch-action: none;
+  overflow: hidden;
+}
+
+.groove-color__sv-white,
+.groove-color__sv-black {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.groove-color__sv-white {
+  background: linear-gradient(to right, #fff, transparent);
+}
+
+.groove-color__sv-black {
+  background: linear-gradient(to top, #000, transparent);
+}
+
+.groove-color__sv-thumb {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+}
+
+.groove-color__hue {
+  position: relative;
+  width: 100%;
+  height: 14px;
+  margin-bottom: 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(201, 164, 92, 0.22);
+  background: linear-gradient(
+    to right,
+    #ff0000,
+    #ffff00,
+    #00ff00,
+    #00ffff,
+    #0000ff,
+    #ff00ff,
+    #ff0000
+  );
+  cursor: pointer;
+  touch-action: none;
+}
+
+.groove-color__hue-thumb {
+  position: absolute;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: transparent;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+}
+
+.groove-color__hex-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.groove-color__hex-row span {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ug-text-soft);
+}
+
+.groove-color__hex {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 1px solid rgba(201, 164, 92, 0.28);
+  border-radius: 8px;
+  background: rgba(18, 12, 28, 0.9);
+  color: var(--ug-text);
+  font: inherit;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.groove-color__hex:focus {
+  outline: 1px solid rgba(201, 164, 92, 0.45);
+}

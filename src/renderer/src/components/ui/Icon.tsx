@@ -20,6 +20,9 @@ const ALIASES: Record<string, string> = {
   home: 'home',
   folder: 'folder',
   'create-folder': 'create-folder',
+  dropdown: 'dropdown',
+  'drop-down': 'dropdown',
+  chevron: 'dropdown',
   playlist: 'create-playlist',
   'create-playlist': 'create-playlist',
   'add-to-playlist': 'add-to-playlist',
@@ -33,8 +36,8 @@ const ALIASES: Record<string, string> = {
   queue: 'queue',
   lyrics: 'lyrics',
   mic: 'lyrics',
-  visualizer: 'palette',
-  viz: 'palette',
+  visualizer: 'visualizer',
+  viz: 'visualizer',
   mini: 'mini',
   fullscreen: 'fullscreen',
   'panel-left': 'panel-left',
@@ -47,6 +50,13 @@ const ALIASES: Record<string, string> = {
   palette: 'palette',
   browse: 'queue',
   download: 'download',
+  /** Settings → Changelog view (dev icon.svg). */
+  dev: 'dev icon',
+  'dev-icon': 'dev icon',
+  hotkeys: 'hotkeys',
+  keybinds: 'hotkeys',
+  information: 'information',
+  info: 'information',
   volume: 'volume_up',
   'volume-up': 'volume_up',
   'volume-down': 'volume_down',
@@ -69,6 +79,7 @@ for (const [path, svg] of Object.entries(RAW_ICONS)) {
     file,
     svg
       .replace(/fill="#e3e3e3"/gi, 'fill="currentColor"')
+      .replace(/stroke="#e3e3e3"/gi, 'stroke="currentColor"')
       .replace(/\s(width|height)="[^"]*"/g, '')
       .replace('<svg', '<svg focusable="false"')
   )

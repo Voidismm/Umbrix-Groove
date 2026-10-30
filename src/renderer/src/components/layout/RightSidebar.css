@@ -1,14 +1,25 @@
 .right-sidebar {
+  position: relative;
   display: flex;
   flex-direction: column;
   width: 100%;
   height: 100%;
   padding: var(--ug-space-4);
+  isolation: isolate;
   background:
-    radial-gradient(ellipse at 50% 0%, rgba(123, 77, 184, 0.16), transparent 50%),
-    linear-gradient(180deg, #14101f, #0b0812);
+    radial-gradient(ellipse at 50% 0%, rgba(123, 77, 184, 0.12), transparent 50%),
+    linear-gradient(180deg, #100c1a, #090712);
   overflow: hidden;
   transition: box-shadow 220ms var(--ug-ease);
+}
+
+.right-sidebar > :not(.galaxy-sky) {
+  position: relative;
+  z-index: 1;
+}
+
+.right-sidebar--queue {
+  padding: var(--ug-space-3) var(--ug-space-3) var(--ug-space-4);
 }
 
 .right-sidebar.is-lit {
@@ -77,10 +88,11 @@
 }
 
 .right-sidebar__icon {
+  position: relative;
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   border-radius: var(--ug-radius-sm);
   color: var(--ug-text-soft);
   border: 1px solid var(--ug-border-subtle);
@@ -91,8 +103,17 @@
   cursor: not-allowed;
 }
 
-.right-sidebar__icon.is-liked {
-  color: #c45b6e;
+.right-sidebar__icon.ug-candy-heart {
+  --ug-candy-heart-size: 24px;
+}
+
+/* Heart path sits high in the SVG box — nudge both layers down for optical center. */
+.right-sidebar__icon.ug-candy-heart::after {
+  transform: translate(-50%, calc(-50% + 1px));
+}
+
+.right-sidebar__icon.ug-candy-heart::before {
+  transform: translate(-50%, calc(-50% + 1px)) scale(0.88);
 }
 
 .right-sidebar__art-fallback {
@@ -152,8 +173,61 @@
 .right-sidebar__body {
   flex: 1;
   min-height: 0;
-  overflow: auto;
+}
+
+/* Slimmer vertical candy bar — width only, thumb height stays content-driven. */
+.right-sidebar__body .candy-scroll__rail {
+  width: 7px;
+  right: -1px;
+}
+
+.right-sidebar__body .candy-scroll__viewport {
   padding-right: 2px;
+}
+
+.right-sidebar__body .candy-scroll.is-overflowing .candy-scroll__viewport {
+  padding-right: 10px;
+}
+
+.right-sidebar__queue-scroll {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+}
+
+.right-sidebar__queue-scroll .candy-scroll__rail {
+  width: 7px;
+  right: -1px;
+}
+
+.right-sidebar__queue-scroll.candy-scroll.is-overflowing .candy-scroll__viewport {
+  padding-right: 10px;
+}
+
+/* Parent candy bar owns scrolling — kill nested native bars in the right rail. */
+.right-sidebar__body .lyrics-rail,
+.right-sidebar__body .lyrics-panel,
+.right-sidebar__body .lyrics-panel__scroll {
+  height: auto;
+  max-height: none;
+  min-height: 0;
+  flex: none;
+}
+
+.right-sidebar__body .lyrics-panel__scroll {
+  overflow: visible;
+  mask-image: none;
+}
+
+.right-sidebar--queue .queue-panel--embedded {
+  height: auto;
+  min-height: 100%;
+}
+
+.right-sidebar--queue .queue-panel__list {
+  overflow: visible;
+  max-height: none;
+  flex: none;
 }
 
 .lyrics p {
@@ -271,8 +345,23 @@
   grid-template-columns: 1fr auto auto;
   align-items: center;
   gap: 6px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--ug-border-subtle);
+  margin: 0 0 4px;
+  padding: 10px 10px 10px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--ug-radius-sm);
+  background: rgba(5, 3, 10, 0.55);
+  transition: background var(--ug-duration) var(--ug-ease);
+}
+
+.related li:last-child {
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+.related li:hover {
+  background:
+    linear-gradient(0deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.06)),
+    rgba(5, 3, 10, 0.55);
 }
 
 .related strong {

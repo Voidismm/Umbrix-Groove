@@ -10,6 +10,7 @@ import type {
   LocalMix,
   ScanProgress,
   ScanResult,
+  TrackMetadataPatch,
   TrackQuery,
   TrackQueryResult,
   TrackRow
@@ -24,6 +25,7 @@ import {
   getRecentTracks,
   getRelatedTracks,
   getSummary,
+  getTrackLyricsOverride,
   importAudioFiles,
   isFolderWatchEnabled,
   listAlbums,
@@ -39,6 +41,7 @@ import {
   setFolderWatchEnabled,
   syncFolderWatchers,
   unwatchLibraryFolder,
+  updateTrackMetadata,
   watchLibraryFolder
 } from '../features/library'
 import type { ArtistSpotlight, RelatedTracksResult } from '../../shared/types'
@@ -258,4 +261,18 @@ export function registerLibraryIpc(): void {
   handle('library:getDailyMixes', (_event, forceRefresh?: unknown): LocalMix[] => {
     return getDailyMixes(forceRefresh === true)
   })
+
+  handle('library:getTrackLyricsOverride', (_event, trackId: unknown): string | null => {
+    if (typeof trackId !== 'string' || !trackId) throw new Error('Invalid track id')
+    return getTrackLyricsOverride(trackId)
+  })
+
+  handle(
+    'library:updateTrackMetadata',
+    (_event, trackId: unknown, patch: unknown): TrackRow => {
+      if (typeof trackId !== 'string' || !trackId) throw new Error('Invalid track id')
+      if (!patch || typeof patch !== 'object') throw new Error('Invalid metadata patch')
+      return updateTrackMetadata(trackId, patch as TrackMetadataPatch)
+    }
+  )
 }

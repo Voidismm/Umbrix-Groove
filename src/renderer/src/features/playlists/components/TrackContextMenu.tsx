@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
 import type { PlaylistSummary, TrackRow } from '@shared/types'
 import { Icon } from '@renderer/components/ui/Icon'
 import { AddToPlaylistPicker } from './AddToPlaylistPicker'
@@ -18,6 +18,7 @@ export type TrackContextMenuProps = {
   onToggleLoved: () => void
   onPlayNext: () => void
   onAddToQueue: () => void
+  onEditMetadata?: () => void
   onRemoveFromPlaylist?: () => void
 }
 
@@ -35,6 +36,7 @@ export function TrackContextMenu({
   onToggleLoved,
   onPlayNext,
   onAddToQueue,
+  onEditMetadata,
   onRemoveFromPlaylist
 }: TrackContextMenuProps): React.JSX.Element {
   const ref = useRef<HTMLDivElement>(null)
@@ -135,7 +137,11 @@ export function TrackContextMenu({
           onClose()
         }}
       >
-        <Icon name={liked ? 'heart-filled' : 'heart'} size={16} />
+        <span
+          className={`ug-candy-heart ug-candy-heart--mark${liked ? ' is-liked' : ''}`}
+          style={{ '--ug-candy-heart-size': '16px' } as CSSProperties}
+          aria-hidden
+        />
         <span>{liked ? 'Remove from loved songs' : 'Add to loved songs'}</span>
       </button>
 
@@ -164,6 +170,21 @@ export function TrackContextMenu({
         <Icon name="queue" size={16} />
         <span>Add to queue</span>
       </button>
+
+      {onEditMetadata ? (
+        <button
+          type="button"
+          role="menuitem"
+          className="track-ctx__item"
+          onClick={() => {
+            onEditMetadata()
+            onClose()
+          }}
+        >
+          <Icon name="edit" size={16} />
+          <span>Edit metadata</span>
+        </button>
+      ) : null}
 
       {playlistId && onRemoveFromPlaylist ? (
         <>

@@ -1,13 +1,20 @@
-.left-sidebar {
+﻿.left-sidebar {
+  position: relative;
   display: flex;
   flex-direction: column;
   width: 100%;
   height: 100%;
+  isolation: isolate;
   background:
-    radial-gradient(ellipse at 50% -8%, rgba(201, 164, 92, 0.14), transparent 42%),
-    radial-gradient(ellipse at 0% 70%, rgba(123, 77, 184, 0.16), transparent 50%),
-    linear-gradient(180deg, #161022 0%, #0e0a16 48%, #0a0710 100%);
+    radial-gradient(ellipse at 50% -8%, rgba(201, 164, 92, 0.1), transparent 42%),
+    radial-gradient(ellipse at 0% 70%, rgba(123, 77, 184, 0.12), transparent 50%),
+    linear-gradient(180deg, #120c1c 0%, #0c0814 48%, #080610 100%);
   overflow: hidden;
+}
+
+.left-sidebar > :not(.galaxy-sky) {
+  position: relative;
+  z-index: 1;
 }
 
 .left-sidebar__nav {
@@ -213,8 +220,20 @@
 
 .left-sidebar__tree {
   flex: 1;
-  overflow: auto;
+  min-height: 0;
+}
+
+.left-sidebar__tree .candy-scroll__rail {
+  width: 7px;
+  right: 0;
+}
+
+.left-sidebar__tree .candy-scroll__viewport {
   padding-right: 4px;
+}
+
+.left-sidebar__tree.candy-scroll.is-overflowing .candy-scroll__viewport {
+  padding-right: 10px;
 }
 
 .left-sidebar__folder {
@@ -267,6 +286,12 @@
   overflow: visible;
 }
 
+/* Gold-frame L-brackets look cramped on the icon rail. */
+.left-sidebar.is-collapsed::before,
+.left-sidebar.is-collapsed::after {
+  content: none;
+}
+
 .left-sidebar.is-collapsed .left-sidebar__nav {
   align-items: center;
   gap: 8px;
@@ -287,17 +312,17 @@
   padding: 0;
   gap: 0;
   border-radius: 50%;
-  color: #f3e9ff;
+  color: #d2c6e4;
   overflow: hidden;
-  /* Same darkened footer orb: purple 2.png + deep tint + gold rim */
+  /* Same darkened footer orb: circle button .png + deep tint + gold rim */
   background-color: #2a1548;
   background-image:
     linear-gradient(
       160deg,
-      rgba(28, 10, 52, 0.42) 0%,
-      rgba(12, 4, 28, 0.58) 100%
+      rgba(72, 18, 130, 0.34) 0%,
+      rgba(28, 6, 58, 0.46) 100%
     ),
-    url('../../assets/buttons/purple 2.png'),
+    url('../../assets/buttons/circle button .png'),
     linear-gradient(
       145deg,
       #f6c86a 0%,
@@ -330,14 +355,14 @@
 .left-sidebar.is-collapsed .left-sidebar__plus:hover,
 .left-sidebar.is-collapsed .playlist-tree__toolbar button:hover,
 .left-sidebar.is-collapsed .playlist-tree__main:not(.playlist-tree__main--playlist):hover {
-  color: #fffaf8;
+  color: #d8cee4;
   background-image:
     linear-gradient(
       160deg,
-      rgba(40, 16, 72, 0.32) 0%,
-      rgba(18, 6, 40, 0.48) 100%
+      rgba(40, 16, 72, 0.26) 0%,
+      rgba(18, 6, 40, 0.38) 100%
     ),
-    url('../../assets/buttons/purple 2.png'),
+    url('../../assets/buttons/circle button .png'),
     linear-gradient(
       145deg,
       #f8d078 0%,
@@ -361,10 +386,10 @@
   background-image:
     linear-gradient(
       160deg,
-      rgba(50, 20, 90, 0.28) 0%,
-      rgba(22, 8, 48, 0.42) 100%
+      rgba(50, 20, 90, 0.26) 0%,
+      rgba(22, 8, 48, 0.38) 100%
     ),
-    url('../../assets/buttons/purple 2.png'),
+    url('../../assets/buttons/circle button .png'),
     linear-gradient(
       145deg,
       #f8d078 0%,
@@ -394,7 +419,7 @@
   gap: 0;
   border-radius: 10px;
   border: 1px solid rgba(201, 164, 92, 0.28);
-  color: #f3e9ff;
+  color: #d2c6e4;
   overflow: hidden;
   text-align: center;
   background-color: #120c1c;
@@ -474,8 +499,18 @@
 
 .left-sidebar.is-collapsed .left-sidebar__tree {
   width: 100%;
-  padding-right: 0;
+  height: auto;
   overflow: visible;
+}
+
+.left-sidebar.is-collapsed .left-sidebar__tree .candy-scroll__viewport {
+  overflow: visible;
+  height: auto;
+  padding-right: 0;
+}
+
+.left-sidebar.is-collapsed .left-sidebar__tree .candy-scroll__rail {
+  display: none;
 }
 
 .left-sidebar.is-collapsed .playlist-tree {

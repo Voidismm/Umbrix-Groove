@@ -9,6 +9,10 @@ export type AppSettings = {
   appearance: {
     reduceMotion: boolean
     compactDensity: boolean
+    /** Show groove-themed hover labels on icon / chrome buttons. */
+    showButtonTips: boolean
+    /** Twinkling galaxy wash on titlebar, footer, and sidebars (home hero stays on). */
+    galaxyChrome: boolean
   }
   playback: {
     rememberPosition: boolean
@@ -25,12 +29,18 @@ export type AppSettings = {
     autoScroll: boolean
     showInStage: boolean
   }
+  warnings: {
+    /** Prompt before the visualizer mounts (photosensitivity / flashing lights). */
+    showVisualizerPhotosensitivity: boolean
+  }
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
   appearance: {
     reduceMotion: false,
-    compactDensity: false
+    compactDensity: false,
+    showButtonTips: true,
+    galaxyChrome: true
   },
   playback: {
     rememberPosition: true,
@@ -45,6 +55,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
     preferSidecar: true,
     autoScroll: true,
     showInStage: true
+  },
+  warnings: {
+    showVisualizerPhotosensitivity: true
   }
 }
 
@@ -61,11 +74,19 @@ function mergeSettings(raw: Partial<AppSettings> | null | undefined): AppSetting
   const playback = raw?.playback
   const library = raw?.library
   const lyrics = raw?.lyrics
+  const warnings = raw?.warnings
 
   return {
     appearance: {
       reduceMotion: !!appearance?.reduceMotion,
-      compactDensity: !!appearance?.compactDensity
+      compactDensity: !!appearance?.compactDensity,
+      // Default ON — only off when the user explicitly toggles it off.
+      showButtonTips:
+        typeof appearance?.showButtonTips === 'boolean'
+          ? appearance.showButtonTips
+          : DEFAULT_SETTINGS.appearance.showButtonTips,
+      // Default ON — only off when the user explicitly toggles it off.
+      galaxyChrome: appearance?.galaxyChrome !== false
     },
     playback: {
       rememberPosition: playback?.rememberPosition !== false,
@@ -84,6 +105,13 @@ function mergeSettings(raw: Partial<AppSettings> | null | undefined): AppSetting
       preferSidecar: lyrics?.preferSidecar !== false,
       autoScroll: lyrics?.autoScroll !== false,
       showInStage: lyrics?.showInStage !== false
+    },
+    warnings: {
+      // Default ON — only off when the user explicitly toggles it off.
+      showVisualizerPhotosensitivity:
+        typeof warnings?.showVisualizerPhotosensitivity === 'boolean'
+          ? warnings.showVisualizerPhotosensitivity
+          : DEFAULT_SETTINGS.warnings.showVisualizerPhotosensitivity
     }
   }
 }
@@ -113,12 +141,14 @@ export function patchSettings(
     playback?: Partial<AppSettings['playback']>
     library?: Partial<AppSettings['library']>
     lyrics?: Partial<AppSettings['lyrics']>
+    warnings?: Partial<AppSettings['warnings']>
   }
 ): AppSettings {
   return mergeSettings({
     appearance: { ...current.appearance, ...patch.appearance },
     playback: { ...current.playback, ...patch.playback },
     library: { ...current.library, ...patch.library },
-    lyrics: { ...current.lyrics, ...patch.lyrics }
+    lyrics: { ...current.lyrics, ...patch.lyrics },
+    warnings: { ...current.warnings, ...patch.warnings }
   })
 }

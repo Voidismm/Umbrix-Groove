@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { Icon } from './Icon'
+import { ModalHeader } from './ModalHeader'
+import './ModalChrome.css'
 import './ConfirmDialog.css'
 
 export type PromptDialogProps = {
@@ -69,22 +70,19 @@ export function PromptDialog({
         aria-labelledby="prompt-dialog-title"
         onClick={(event) => event.stopPropagation()}
       >
-        <header className="confirm-dialog__head">
-          <h2 id="prompt-dialog-title">{title}</h2>
-          <button
-            type="button"
-            className="confirm-dialog__close"
-            aria-label="Close"
-            disabled={busy}
-            onClick={onCancel}
-          >
-            <Icon name="close" size={16} />
-          </button>
-        </header>
+        <ModalHeader
+          title={title}
+          titleId="prompt-dialog-title"
+          seed={19}
+          onClose={onCancel}
+          closeDisabled={busy}
+        />
         {message ? (
-          <p id="prompt-dialog-message" className="confirm-dialog__message">
-            {message}
-          </p>
+          <div className="confirm-dialog__body">
+            <p id="prompt-dialog-message" className="confirm-dialog__message">
+              {message}
+            </p>
+          </div>
         ) : null}
         <form
           className="confirm-dialog__form"
@@ -108,7 +106,7 @@ export function PromptDialog({
           <footer className="confirm-dialog__foot">
             <button
               type="button"
-              className="confirm-dialog__btn confirm-dialog__btn--ghost"
+              className="ug-modal__btn ug-modal__btn--ghost"
               disabled={busy}
               onClick={onCancel}
             >
@@ -116,7 +114,7 @@ export function PromptDialog({
             </button>
             <button
               type="submit"
-              className="confirm-dialog__btn confirm-dialog__btn--solid"
+              className="ug-modal__btn ug-modal__btn--solid"
               disabled={busy || !value.trim()}
             >
               {busy ? 'Working…' : confirmLabel}

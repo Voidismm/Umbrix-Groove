@@ -31,6 +31,17 @@
   color: var(--ug-gold-bright);
 }
 
+.playlist-cover--loved {
+  place-items: center;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(201, 164, 92, 0.28), transparent 55%),
+    linear-gradient(145deg, #2a1848, #120c1c);
+}
+
+.playlist-cover--loved.playlist-cover--fill {
+  border: none;
+}
+
 .playlist-cover--fill {
   width: 100%;
   aspect-ratio: 1;

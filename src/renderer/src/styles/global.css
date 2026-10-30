@@ -7,6 +7,8 @@
 @import '@fontsource/source-sans-3/500.css';
 @import '@fontsource/source-sans-3/600.css';
 @import './tokens.css';
+@import './candyHeart.css';
+@import '../components/ui/GrooveTip.css';
 
 *,
 *::before,
@@ -45,6 +47,17 @@ button {
   border: none;
   background: none;
   padding: 0;
+}
+
+/* App-wide native dropdowns use the Umbrix dropdown chevron. */
+select {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 28px;
+  background-image: url('../assets/icons/dropdown.svg');
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 16px 16px;
 }
 
 button:focus-visible,
@@ -148,6 +161,136 @@ img {
   width: 100%;
   height: 100%;
   display: block;
+}
+
+/*
+  Shared range look (volume / hue / etc.).
+  Set --ug-range to the fill percent (e.g. "42%"). Seek rail keeps its own chrome.
+*/
+.ug-slider {
+  --ug-range: 0%;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 14px;
+  margin: 0;
+  background: transparent;
+  accent-color: transparent;
+  cursor: pointer;
+}
+
+.ug-slider::-webkit-slider-runnable-track {
+  height: 10px;
+  border-radius: 999px;
+  border: none;
+  background-color: #4a2080;
+  background-image:
+    linear-gradient(
+      to right,
+      transparent 0%,
+      transparent var(--ug-range),
+      rgba(7, 5, 12, 0.72) var(--ug-range),
+      rgba(7, 5, 12, 0.72) 100%
+    ),
+    linear-gradient(
+      160deg,
+      rgba(28, 10, 52, 0.28) 0%,
+      rgba(12, 4, 28, 0.38) 100%
+    ),
+    url('../assets/buttons/wide button round.png');
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-position: 0 0, 0 0, center;
+  background-size: 100% 100%, 100% 100%, 100% 100%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.ug-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+  width: 14px;
+  height: 14px;
+  margin-top: -2px;
+  border: 1.5px solid transparent;
+  border-radius: 50%;
+  background-color: #4a2878;
+  background-image:
+    url('../assets/buttons/circle button .png'),
+    linear-gradient(
+      145deg,
+      #f6c86a 0%,
+      #e8a84a 22%,
+      #c47a28 48%,
+      #8a4e14 68%,
+      #d4923a 88%,
+      #a86220 100%
+    );
+  background-repeat: no-repeat, no-repeat;
+  background-position: center, 0 0;
+  background-size: cover, auto;
+  background-origin: border-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+}
+
+.ug-slider:hover::-webkit-slider-thumb {
+  filter: brightness(1.08);
+}
+
+.ug-slider::-moz-range-track {
+  height: 10px;
+  border-radius: 999px;
+  border: none;
+  background-color: #4a2080;
+  background-image:
+    linear-gradient(
+      to right,
+      transparent 0%,
+      transparent var(--ug-range),
+      rgba(7, 5, 12, 0.72) var(--ug-range),
+      rgba(7, 5, 12, 0.72) 100%
+    ),
+    linear-gradient(
+      160deg,
+      rgba(28, 10, 52, 0.28) 0%,
+      rgba(12, 4, 28, 0.38) 100%
+    ),
+    url('../assets/buttons/wide button round.png');
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-position: 0 0, 0 0, center;
+  background-size: 100% 100%, 100% 100%, 100% 100%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.ug-slider::-moz-range-thumb {
+  box-sizing: border-box;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid transparent;
+  border-radius: 50%;
+  background-color: #4a2878;
+  background-image:
+    url('../assets/buttons/circle button .png'),
+    linear-gradient(
+      145deg,
+      #f6c86a 0%,
+      #e8a84a 22%,
+      #c47a28 48%,
+      #8a4e14 68%,
+      #d4923a 88%,
+      #a86220 100%
+    );
+  background-repeat: no-repeat, no-repeat;
+  background-position: center, 0 0;
+  background-size: cover, auto;
+  background-origin: border-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+}
+
+.ug-slider:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 html[data-density='compact'] {

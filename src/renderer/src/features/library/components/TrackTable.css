@@ -20,11 +20,11 @@
 }
 
 .track-table__meta select {
-  background: var(--ug-ink);
+  background-color: var(--ug-ink);
   border: 1px solid var(--ug-border-subtle);
   color: var(--ug-text);
   border-radius: var(--ug-radius-sm);
-  padding: 6px 10px;
+  padding: 6px 28px 6px 10px;
 }
 
 .track-table__head,
@@ -50,6 +50,31 @@
   padding: 0;
   max-height: min(58vh, 640px);
   overflow: auto;
+}
+
+.track-table__list--virtual {
+  position: relative;
+  /* layout/paint only — size containment collapses height when rows are absolute */
+  contain: layout paint;
+}
+
+/* Page-scrolled lists (All Songs / playlists): no inner max-height; spacer drives height. */
+.track-table__list--page-scroll {
+  max-height: none;
+  overflow: visible;
+}
+
+.track-table__virtual-spacer {
+  position: relative;
+  width: 100%;
+}
+
+.track-table__row.is-virtual {
+  position: absolute;
+  top: 0;
+  left: 0;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .track-table__hint {

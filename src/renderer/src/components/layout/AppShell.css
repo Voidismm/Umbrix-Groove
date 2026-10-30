@@ -21,22 +21,42 @@
   grid-template-columns: var(--ug-sidebar-left) 16px minmax(0, 1fr);
 }
 
-/* Frameless drag: title + footer move the window when not maximized */
-.app-shell--window-maximized .titlebar,
-.app-shell--window-maximized .player-footer {
-  -webkit-app-region: no-drag;
-}
+/* Keep drag regions when maximized so double-click can restore, and drag-to-snap still works. */
 
 .app-shell--resizing {
   cursor: col-resize;
   user-select: none;
 }
 
-/* Keep hit-testing off pane chrome while dragging; avoid the old
-   universal `*` cursor rule that restyled the whole tree. */
+/* Keep hit-testing off pane chrome while dragging. Prefer narrow selectors —
+   a universal `*` transition reset was itself expensive in Electron. */
 .app-shell--resizing .app-shell__pane {
   pointer-events: none;
-  contain: layout style;
+  overflow: hidden;
+  contain: layout style paint;
+  transition: none !important;
+}
+
+.app-shell--resizing .app-shell__body,
+.app-shell--resizing .app-shell__resizer::before,
+.app-shell--resizing .player-footer,
+.app-shell--resizing .player-footer * {
+  transition: none !important;
+}
+
+/* Drop saturate filters on circle chrome while columns reflow. */
+.app-shell--resizing .player-footer__icon,
+.app-shell--resizing .player-footer__play,
+.app-shell--resizing .player-footer__controls button,
+.app-shell--resizing .left-sidebar.is-collapsed .left-sidebar__nav-item,
+.app-shell--resizing .left-sidebar.is-collapsed .left-sidebar__row,
+.app-shell--resizing .left-sidebar.is-collapsed .left-sidebar__plus,
+.app-shell--resizing .left-sidebar.is-collapsed .playlist-tree__main {
+  filter: none !important;
+}
+
+.app-shell--resizing .player-footer {
+  pointer-events: none;
 }
 
 .app-shell__pane {
@@ -94,4 +114,15 @@
 .app-shell__resizer:hover::before,
 .app-shell--resizing .app-shell__resizer::before {
   background: rgba(165, 109, 232, 0.35);
+  transition: none;
+}
+
+/* Collapsed left rail: no resize cursor / drag — expand from the titlebar. */
+.app-shell--left-collapsed .app-shell__pane--left + .app-shell__resizer {
+  pointer-events: none;
+  cursor: default;
+}
+
+.app-shell--left-collapsed .app-shell__pane--left + .app-shell__resizer:hover::before {
+  background: transparent;
 }

@@ -77,6 +77,12 @@
   padding: 24px 12px 48px;
 }
 
+/* Main pane candy scroll owns the bar — do not nest a second scroller. */
+.candy-scroll__viewport .lyrics-panel--stage .lyrics-panel__scroll {
+  overflow: visible;
+  mask-image: none;
+}
+
 .lyrics-panel__line.is-active {
   color: var(--ug-gold-bright);
   transform: translateX(2px);

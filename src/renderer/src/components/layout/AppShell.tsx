@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { LibraryProvider } from '@renderer/features/library'
-import { PlaybackProvider, QueuePanel } from '@renderer/features/player'
+import { PlaybackProvider, usePlayback } from '@renderer/features/player'
 import { PlaylistProvider } from '@renderer/features/playlists'
 import { SettingsProvider } from '@renderer/features/settings'
 import { SettingsModal } from '../settings/SettingsModal'
+import { GrooveTipHost } from '../ui/GrooveTipHost'
+import { ChangelogDialogHost } from '../ui/ChangelogDialog'
 import { UpdateDialogHost } from '../ui/UpdateDialog'
 import { CenterWorkspace } from './CenterWorkspace'
 import { LeftSidebar } from './LeftSidebar'
@@ -11,7 +13,13 @@ import { PlayerFooter } from './PlayerFooter'
 import { RightSidebar, type RightTabId } from './RightSidebar'
 import { TitleBar } from './TitleBar'
 import { readSession, SESSION_KEYS, writeSession } from '@renderer/lib/session'
+import {
+  OPEN_SETTINGS_EVENT,
+  type OpenSettingsDetail,
+  type SettingsFocusTarget
+} from '@renderer/lib/settingsNav'
 import { setShellResizing } from '@renderer/lib/shellResize'
+import { NavHistoryBridge } from '@renderer/app/NavHistoryBridge'
 import './AppShell.css'
 
 const LEFT_DEFAULT = 268
@@ -56,21 +64,27 @@ function loadShellSession(): ShellSession {
 }
 
 function ShellFrame(): React.JSX.Element {
+  const { queueRevealTick } = usePlayback()
   const [initialShell] = useState(loadShellSession)
   const [rightOpen, setRightOpen] = useState(initialShell.rightOpen)
   const [rightTab, setRightTab] = useState<RightTabId>(initialShell.rightTab)
   const [leftCollapsed, setLeftCollapsed] = useState(initialShell.leftCollapsed)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [settingsFocus, setSettingsFocus] = useState<SettingsFocusTarget | null>(null)
   const [rightRevealTick, setRightRevealTick] = useState(0)
   const [leftWidth, setLeftWidth] = useState(initialShell.leftWidth)
   const [rightWidth, setRightWidth] = useState(initialShell.rightWidth)
-  const [dragging, setDragging] = useState<DragSide | null>(null)
   const [windowMaximized, setWindowMaximized] = useState(false)
 
+  const shellRef = useRef<HTMLDivElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
   const leftExpandedRef = useRef(initialShell.leftWidth)
   const rightExpandedRef = useRef(initialShell.rightWidth)
+  const lastNonQueueTabRef = useRef<Exclude<RightTabId, 'queue'>>(
+    initialShell.rightTab === 'queue' ? 'about' : initialShell.rightTab
+  )
   const dragRef = useRef<{ side: DragSide; startX: number; startW: number } | null>(null)
+  const draggingRef = useRef(false)
   const rightOpenRef = useRef(initialShell.rightOpen)
   const liveRef = useRef({
     leftWidth: initialShell.leftWidth,
@@ -99,13 +113,13 @@ function ShellFrame(): React.JSX.Element {
 
   useLayoutEffect(() => {
     rightOpenRef.current = rightOpen
-    if (dragging) {
+    if (draggingRef.current) {
       paintColumns()
       return
     }
     liveRef.current = { leftWidth, rightWidth, leftCollapsed }
     paintColumns()
-  }, [dragging, leftCollapsed, leftWidth, paintColumns, rightOpen, rightWidth])
+  }, [leftCollapsed, leftWidth, paintColumns, rightOpen, rightWidth])
 
   useEffect(() => {
     return () => {
@@ -114,15 +128,39 @@ function ShellFrame(): React.JSX.Element {
   }, [])
 
   useEffect(() => {
-    if (dragging) return
+    const onOpenSettings = (event: Event): void => {
+      const detail = (event as CustomEvent<OpenSettingsDetail>).detail
+      setSettingsFocus(detail?.focus ?? null)
+      setSettingsOpen(true)
+    }
+    window.addEventListener(OPEN_SETTINGS_EVENT, onOpenSettings)
+    return () => window.removeEventListener(OPEN_SETTINGS_EVENT, onOpenSettings)
+  }, [])
+
+  const rightTabRef = useRef(rightTab)
+  rightTabRef.current = rightTab
+
+  useEffect(() => {
+    if (!queueRevealTick) return
+    const current = rightTabRef.current
+    if (current === 'lyrics' || current === 'about' || current === 'related') {
+      lastNonQueueTabRef.current = current
+    }
+    setRightOpen(true)
+    setRightWidth(rightExpandedRef.current)
+    setRightTab('queue')
+  }, [queueRevealTick])
+
+  useEffect(() => {
+    if (draggingRef.current) return
     writeSession(SESSION_KEYS.shell, {
       rightOpen,
-      rightTab,
+      rightTab: rightTab === 'queue' ? lastNonQueueTabRef.current : rightTab,
       leftCollapsed,
       leftWidth,
       rightWidth
     } satisfies ShellSession)
-  }, [dragging, leftCollapsed, leftWidth, rightOpen, rightTab, rightWidth])
+  }, [leftCollapsed, leftWidth, rightOpen, rightTab, rightWidth])
 
   const leftCol = leftCollapsed ? LEFT_COLLAPSED : leftWidth
 
@@ -157,23 +195,75 @@ function ShellFrame(): React.JSX.Element {
   const beginResize = useCallback(
     (side: DragSide, event: React.PointerEvent<HTMLDivElement>) => {
       event.preventDefault()
+      event.stopPropagation()
+      if (draggingRef.current) return
+      // Collapsed rail is icon-only — expand via the titlebar toggle, not the gutter.
+      if (side === 'left' && liveRef.current.leftCollapsed) return
+
       const live = liveRef.current
-      const startW =
-        side === 'left'
-          ? live.leftCollapsed
-            ? LEFT_COLLAPSED
-            : live.leftWidth
-          : live.rightWidth
-      if (side === 'left' && live.leftCollapsed) {
-        live.leftCollapsed = false
-        setLeftCollapsed(false)
-      }
+      const startW = side === 'left' ? live.leftWidth : live.rightWidth
+
       dragRef.current = { side, startX: event.clientX, startW }
+      draggingRef.current = true
       setShellResizing(true)
-      setDragging(side)
+      shellRef.current?.classList.add('app-shell--resizing')
       event.currentTarget.setPointerCapture(event.pointerId)
+      paintColumns()
+
+      const onMove = (moveEvent: PointerEvent): void => {
+        const drag = dragRef.current
+        if (!drag) return
+        const delta = moveEvent.clientX - drag.startX
+        const nextLive = liveRef.current
+
+        if (drag.side === 'left') {
+          const next = drag.startW + delta
+          if (next < LEFT_SNAP) {
+            leftExpandedRef.current = Math.max(LEFT_MIN, drag.startW)
+            nextLive.leftWidth = leftExpandedRef.current
+            nextLive.leftCollapsed = true
+            dragRef.current = {
+              side: 'left',
+              startX: moveEvent.clientX,
+              startW: LEFT_COLLAPSED
+            }
+            schedulePaint()
+            return
+          }
+          nextLive.leftCollapsed = false
+          const width = clamp(next, LEFT_MIN, LEFT_MAX)
+          nextLive.leftWidth = width
+          leftExpandedRef.current = width
+          schedulePaint()
+          return
+        }
+
+        const width = clamp(drag.startW - delta, RIGHT_MIN, RIGHT_MAX)
+        nextLive.rightWidth = width
+        rightExpandedRef.current = width
+        schedulePaint()
+      }
+
+      const onUp = (): void => {
+        window.removeEventListener('pointermove', onMove)
+        window.removeEventListener('pointerup', onUp)
+        window.removeEventListener('pointercancel', onUp)
+        const nextLive = liveRef.current
+        dragRef.current = null
+        draggingRef.current = false
+        shellRef.current?.classList.remove('app-shell--resizing')
+        setShellResizing(false)
+        // One React sync after the gesture — never during it.
+        setLeftWidth(nextLive.leftWidth)
+        setRightWidth(nextLive.rightWidth)
+        setLeftCollapsed(nextLive.leftCollapsed)
+      }
+
+      window.addEventListener('pointermove', onMove)
+      window.addEventListener('pointerup', onUp)
+      window.addEventListener('pointercancel', onUp)
     },
-    []
+    [paintColumns, schedulePaint]
   )
 
   useEffect(() => {
@@ -182,78 +272,14 @@ function ShellFrame(): React.JSX.Element {
     return window.api.window.onMaximizedChange(setWindowMaximized)
   }, [])
 
-  useEffect(() => {
-    if (!dragging) return
-
-    const onMove = (event: PointerEvent): void => {
-      const drag = dragRef.current
-      if (!drag) return
-      const delta = event.clientX - drag.startX
-      const live = liveRef.current
-
-      if (drag.side === 'left') {
-        const next = drag.startW + delta
-        if (next < LEFT_SNAP) {
-          leftExpandedRef.current = Math.max(LEFT_MIN, drag.startW)
-          live.leftWidth = leftExpandedRef.current
-          if (!live.leftCollapsed) {
-            live.leftCollapsed = true
-            setLeftCollapsed(true)
-          }
-          dragRef.current = {
-            side: 'left',
-            startX: event.clientX,
-            startW: LEFT_COLLAPSED
-          }
-          schedulePaint()
-          return
-        }
-        if (live.leftCollapsed) {
-          live.leftCollapsed = false
-          setLeftCollapsed(false)
-        }
-        const width = clamp(next, LEFT_MIN, LEFT_MAX)
-        live.leftWidth = width
-        leftExpandedRef.current = width
-        schedulePaint()
-        return
-      }
-
-      const next = clamp(drag.startW - delta, RIGHT_MIN, RIGHT_MAX)
-      live.rightWidth = next
-      rightExpandedRef.current = next
-      schedulePaint()
-    }
-
-    const onUp = (): void => {
-      const live = liveRef.current
-      dragRef.current = null
-      setLeftWidth(live.leftWidth)
-      setRightWidth(live.rightWidth)
-      setLeftCollapsed(live.leftCollapsed)
-      setShellResizing(false)
-      setDragging(null)
-    }
-
-    window.addEventListener('pointermove', onMove)
-    window.addEventListener('pointerup', onUp)
-    window.addEventListener('pointercancel', onUp)
-    return () => {
-      window.removeEventListener('pointermove', onMove)
-      window.removeEventListener('pointerup', onUp)
-      window.removeEventListener('pointercancel', onUp)
-      setShellResizing(false)
-    }
-  }, [dragging, schedulePaint])
-
   return (
     <div
+      ref={shellRef}
       className={`app-shell${rightOpen ? '' : ' app-shell--right-collapsed'}${
         leftCollapsed ? ' app-shell--left-collapsed' : ''
-      }${dragging ? ' app-shell--resizing' : ''}${
-        windowMaximized ? ' app-shell--window-maximized' : ''
-      }`}
+      }${windowMaximized ? ' app-shell--window-maximized' : ''}`}
     >
+      <NavHistoryBridge />
       <TitleBar
         leftCollapsed={leftCollapsed}
         onToggleLeft={toggleLeft}
@@ -274,6 +300,7 @@ function ShellFrame(): React.JSX.Element {
           aria-valuenow={leftCol}
           aria-valuemin={LEFT_COLLAPSED}
           aria-valuemax={LEFT_MAX}
+          aria-disabled={leftCollapsed || undefined}
           onPointerDown={(event) => beginResize('left', event)}
         />
 
@@ -296,29 +323,61 @@ function ShellFrame(): React.JSX.Element {
             <div className="app-shell__pane app-shell__pane--right">
               <RightSidebar
                 tab={rightTab}
-                onTabChange={setRightTab}
+                onTabChange={(next) => {
+                  if (next !== 'queue') lastNonQueueTabRef.current = next
+                  setRightTab(next)
+                }}
+                onLeaveQueue={() => {
+                  setRightTab(lastNonQueueTabRef.current)
+                }}
                 revealTick={rightRevealTick}
               />
             </div>
           </>
         )}
       </div>
-      <QueuePanel />
       <PlayerFooter
+        queueActive={rightOpen && rightTab === 'queue'}
+        onToggleQueue={() => {
+          if (rightOpen && rightTab === 'queue') {
+            setRightTab(lastNonQueueTabRef.current)
+            setRightOpen(true)
+            setRightWidth(rightExpandedRef.current)
+            return
+          }
+          if (rightTab !== 'queue') {
+            lastNonQueueTabRef.current = rightTab
+          }
+          setRightOpen(true)
+          setRightWidth(rightExpandedRef.current)
+          setRightTab('queue')
+        }}
         onOpenRightLyrics={() => {
+          lastNonQueueTabRef.current = 'lyrics'
           setRightOpen(true)
           setRightWidth(rightExpandedRef.current)
           setRightTab('lyrics')
         }}
         onOpenNowPlaying={() => {
+          lastNonQueueTabRef.current = 'about'
           setRightOpen(true)
           setRightWidth(rightExpandedRef.current)
           setRightTab('about')
           setRightRevealTick((n) => n + 1)
         }}
       />
-      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <SettingsModal
+        open={settingsOpen}
+        focusTarget={settingsFocus}
+        onClose={() => {
+          setSettingsOpen(false)
+          setSettingsFocus(null)
+        }}
+        onFocusHandled={() => setSettingsFocus(null)}
+      />
       <UpdateDialogHost />
+      <ChangelogDialogHost />
+      <GrooveTipHost />
     </div>
   )
 }

@@ -1,4 +1,5 @@
-.player-footer {
+﻿.player-footer {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(220px, 1fr) minmax(320px, 1.4fr) minmax(220px, 1fr);
   align-items: center;
@@ -9,93 +10,182 @@
   height: var(--ug-footer-h);
   margin: 0 10px 10px;
   padding: 0 var(--ug-space-4);
+  overflow: hidden;
+  isolation: isolate;
   background:
-    linear-gradient(180deg, rgba(22, 16, 34, 0.98), rgba(10, 7, 15, 1));
+    radial-gradient(ellipse at 20% 0%, rgba(123, 77, 184, 0.16), transparent 52%),
+    linear-gradient(180deg, rgba(16, 10, 28, 0.94), rgba(8, 5, 14, 0.98));
   z-index: 20;
   -webkit-app-region: drag;
+  transition:
+    opacity 220ms ease,
+    transform 220ms ease;
 }
 
+.player-footer > :not(.galaxy-sky) {
+  position: relative;
+  z-index: 1;
+}
+
+/* Keep chrome stars out of the now-playing + love heart cluster. */
+.player-footer .galaxy-sky {
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    transparent 26%,
+    #000 34%
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    transparent 26%,
+    #000 34%
+  );
+}
+
+/* Visualizer fullscreen: footer stays in the stage area (not over the rail). */
+html[data-viz-fullscreen='true'] .player-footer {
+  position: fixed;
+  left: 10px;
+  right: calc(var(--ug-viz-rail, 320px) + 10px);
+  bottom: 10px;
+  width: auto;
+  margin: 0;
+  z-index: 70;
+  /* Do not transition `right` — rail drag updates --ug-viz-rail every frame and a
+     220ms ease made the footer lag behind the sidebar. */
+  transition:
+    opacity 220ms ease,
+    transform 220ms ease;
+}
+
+html[data-viz-fullscreen='true'][data-viz-rail='collapsed'] .player-footer {
+  right: calc(var(--ug-viz-rail, 48px) + 10px);
+}
+
+html[data-viz-fullscreen='true'][data-viz-footer='hidden'] .player-footer {
+  right: 10px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(14px);
+}
+
+html[data-viz-fullscreen='true'][data-viz-footer='visible'] .player-footer {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+html[data-reduce-motion='true'] .player-footer {
+  transition: none;
+}
+
+/* Only interactive chrome is no-drag — empty header/footer padding stays a window drag handle. */
 .player-footer button,
 .player-footer input,
 .player-footer a,
 .player-footer label,
 .player-footer__seek,
 .player-footer__volume,
-.player-footer__controls,
-.player-footer__transport,
-.player-footer__extras,
-.player-footer__now {
+.player-footer__now-card,
+.player-footer__track-row {
   -webkit-app-region: no-drag;
 }
 
 .player-footer__now {
   display: flex;
   align-items: center;
-  gap: 10px;
   min-width: 0;
+  max-width: 100%;
 }
 
-.player-footer__meta {
+/* Art+name card beside love card — same height, separate hover pads */
+.player-footer__track-row {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  height: 56px;
+}
+
+.player-footer__now-card {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 10px;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(220px, 100%);
   min-width: 0;
-  flex: 1;
+  height: 100%;
+  margin: 0;
+  padding: 4px 10px 4px 4px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.player-footer__now-card.is-empty {
+  cursor: default;
+}
+
+.player-footer__now-card:hover,
+.player-footer__now-card:focus-visible {
+  background: rgba(242, 235, 255, 0.05);
+  border-color: rgba(242, 235, 255, 0.08);
+}
+
+.player-footer__now-card:hover .player-footer__title,
+.player-footer__now-card:focus-visible .player-footer__title {
+  color: var(--ug-gold-bright);
 }
 
 .player-footer__love {
+  --ug-candy-heart-size: 26px;
+  position: relative;
   flex-shrink: 0;
-  display: inline-grid;
+  display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  box-sizing: border-box;
+  width: 56px;
+  min-width: 56px;
+  height: 100%;
+  margin: 0;
   padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: none;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
   background-image: none;
   box-shadow: none;
-  color: var(--ug-text-muted);
+  color: transparent;
   line-height: 0;
-  overflow: hidden;
+  overflow: visible;
+  cursor: pointer;
 }
 
 .player-footer__love .ug-icon,
 .player-footer__love svg {
-  position: relative;
-  z-index: 2;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
 }
 
 .player-footer__love:hover {
-  color: var(--ug-text);
-  background: none;
-  background-image: none;
-  box-shadow: none;
-}
-
-.player-footer__love.is-liked {
-  color: var(--ug-amethyst-bright);
-  border: none;
-  background: none;
-  background-image: none;
-  box-shadow: none;
-}
-
-.player-footer__love.is-liked:hover {
-  color: var(--ug-amethyst);
-  background: none;
+  background: rgba(201, 164, 92, 0.12);
+  border-color: rgba(201, 164, 92, 0.18);
   background-image: none;
   box-shadow: none;
 }
 
 .player-footer__thumb {
-  width: 56px;
-  height: 56px;
+  width: 48px;
+  height: 48px;
   display: grid;
   place-items: center;
-  border-radius: var(--ug-radius-md);
+  border-radius: 8px;
   border: 1px solid var(--ug-border);
   color: var(--ug-gold-bright);
   background: linear-gradient(145deg, #2a1848, #120c1c);
@@ -110,16 +200,19 @@
 }
 
 .player-footer__text {
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   min-width: 0;
-  max-width: 100%;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 2px;
+  padding: 0 2px 0 0;
 }
 
 .player-footer__text strong,
 .player-footer__title {
+  display: block;
+  max-width: 100%;
   font-size: 14px;
   font-weight: 600;
   white-space: nowrap;
@@ -129,28 +222,15 @@
   text-align: left;
 }
 
-.player-footer__title {
+.player-footer__artist,
+.player-footer__text span {
   display: block;
   max-width: 100%;
-  padding: 0;
-  border: none;
-  border-radius: 0;
-  background: none;
-  cursor: pointer;
-  text-decoration: none;
-  -webkit-app-region: no-drag;
-}
-
-.player-footer__title:hover,
-.player-footer__title:focus-visible {
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  color: var(--ug-gold-bright);
-}
-
-.player-footer__text span {
   color: var(--ug-text-muted);
   font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .player-footer__icon,
@@ -172,17 +252,17 @@
   box-sizing: border-box;
   position: relative;
   border-radius: 50%;
-  color: #f3e9ff;
+  color: #d2c6e4;
   overflow: hidden;
   /* Darker purple fill — image + deep tint, clipped inside gold rim */
   background-color: #2a1548;
   background-image:
     linear-gradient(
       160deg,
-      rgba(28, 10, 52, 0.42) 0%,
-      rgba(12, 4, 28, 0.58) 100%
+      rgba(72, 18, 130, 0.34) 0%,
+      rgba(28, 6, 58, 0.46) 100%
     ),
-    url('../../assets/buttons/purple 2.png'),
+    url('../../assets/buttons/circle button .png'),
     linear-gradient(
       145deg,
       #f6c86a 0%,
@@ -219,14 +299,14 @@
 
 .player-footer__icon:hover:not(:disabled),
 .player-footer__controls button:not(.player-footer__play):hover:not(:disabled) {
-  color: #fffaf8;
+  color: #d8cee4;
   background-image:
     linear-gradient(
       160deg,
-      rgba(40, 16, 72, 0.32) 0%,
-      rgba(18, 6, 40, 0.48) 100%
+      rgba(40, 16, 72, 0.26) 0%,
+      rgba(18, 6, 40, 0.38) 100%
     ),
-    url('../../assets/buttons/purple 2.png'),
+    url('../../assets/buttons/circle button .png'),
     linear-gradient(
       145deg,
       #f8d078 0%,
@@ -287,20 +367,24 @@
 }
 
 .player-footer__icon.is-active,
-.player-footer__controls button.is-active:not(.player-footer__play) {
+.player-footer__icon.is-active:hover:not(:disabled),
+.player-footer__controls button.is-active:not(.player-footer__play),
+.player-footer__controls button.is-active:not(.player-footer__play):hover:not(:disabled) {
   color: var(--ug-control-active-bright);
 }
 
-.player-footer__icon.is-muted {
-  color: var(--ug-control-danger-bright);
+.player-footer__icon.is-muted,
+.player-footer__icon.is-muted:hover:not(:disabled) {
+  color: #ff1438;
 }
 
-.player-footer__icon.is-liked {
+.player-footer__icon.is-liked,
+.player-footer__icon.is-liked:hover:not(:disabled) {
   color: #f0a0b0;
 }
 
 .player-footer__seek-rail input:not(:disabled),
-.player-footer__volume input[type='range'] {
+.player-footer__volume .ug-slider {
   cursor: pointer;
 }
 
@@ -323,11 +407,12 @@
   left: 0;
   right: 0;
   top: 50%;
-  height: 8px;
+  height: 10px;
   transform: translateY(-50%);
   border-radius: 999px;
-  border: 1.5px solid transparent;
-  background-color: #1a0f2e;
+  overflow: hidden;
+  border: none;
+  background-color: #4a2080;
   background-image:
     linear-gradient(
       to right,
@@ -336,21 +421,15 @@
       rgba(7, 5, 12, 0.72) var(--ug-range),
       rgba(7, 5, 12, 0.72) 100%
     ),
-    url('../../assets/buttons/purple 2.png'),
     linear-gradient(
-      145deg,
-      #f6c86a 0%,
-      #e8a84a 22%,
-      #c47a28 48%,
-      #8a4e14 68%,
-      #d4923a 88%,
-      #a86220 100%
-    );
+      160deg,
+      rgba(28, 10, 52, 0.28) 0%,
+      rgba(12, 4, 28, 0.38) 100%
+    ),
+    url('../../assets/buttons/wide button round.png');
   background-repeat: no-repeat, no-repeat, no-repeat;
-  background-position: 0 0, center, 0 0;
-  background-size: 100% 100%, 140% 400%, auto;
-  background-origin: border-box, border-box, border-box;
-  background-clip: padding-box, padding-box, border-box;
+  background-position: 0 0, 0 0, center;
+  background-size: 100% 100%, 100% 100%, 100% 100%;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   pointer-events: none;
 }
@@ -372,14 +451,14 @@
 }
 
 .player-footer__seek-rail input[type='range']::-webkit-slider-runnable-track {
-  height: 8px;
+  height: 10px;
   background: transparent;
   border: none;
   box-shadow: none;
 }
 
 .player-footer__seek-rail input[type='range']::-moz-range-track {
-  height: 8px;
+  height: 10px;
   background: transparent;
   border: none;
   box-shadow: none;
@@ -390,7 +469,7 @@
   appearance: none;
   width: 14px;
   height: 14px;
-  margin-top: -3px;
+  margin-top: -2px;
   border: none;
   border-radius: 50%;
   background: transparent;
@@ -420,7 +499,7 @@
   background-color: #4a2878;
   /* Same thin gold rim as the footer buttons — not a solid outer ring. */
   background-image:
-    url('../../assets/buttons/purple 2.png'),
+    url('../../assets/buttons/circle button .png'),
     linear-gradient(
       145deg,
       #f6c86a 0%,
@@ -443,137 +522,9 @@
   opacity: 0.55;
 }
 
-.player-footer__volume input[type='range'] {
-  --ug-range: 0%;
-  -webkit-appearance: none;
-  appearance: none;
+.player-footer__volume .ug-slider {
   flex: 1;
   min-width: 0;
-  width: 100%;
-  height: 14px;
-  background: transparent;
-  accent-color: transparent;
-}
-
-.player-footer__volume input[type='range']::-webkit-slider-runnable-track {
-  height: 8px;
-  border-radius: 999px;
-  border: 1.5px solid transparent;
-  background-color: #1a0f2e;
-  background-image:
-    linear-gradient(
-      to right,
-      transparent 0%,
-      transparent var(--ug-range),
-      rgba(7, 5, 12, 0.72) var(--ug-range),
-      rgba(7, 5, 12, 0.72) 100%
-    ),
-    url('../../assets/buttons/purple 2.png'),
-    linear-gradient(
-      145deg,
-      #f6c86a 0%,
-      #e8a84a 22%,
-      #c47a28 48%,
-      #8a4e14 68%,
-      #d4923a 88%,
-      #a86220 100%
-    );
-  background-repeat: no-repeat, no-repeat, no-repeat;
-  background-position: 0 0, center, 0 0;
-  background-size: 100% 100%, 140% 400%, auto;
-  background-origin: border-box, border-box, border-box;
-  background-clip: padding-box, padding-box, border-box;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-}
-
-.player-footer__volume input[type='range']::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  box-sizing: border-box;
-  width: 14px;
-  height: 14px;
-  margin-top: -4px;
-  border: 1.5px solid transparent;
-  border-radius: 50%;
-  background-color: #4a2878;
-  background-image:
-    url('../../assets/buttons/purple 2.png'),
-    linear-gradient(
-      145deg,
-      #f6c86a 0%,
-      #e8a84a 22%,
-      #c47a28 48%,
-      #8a4e14 68%,
-      #d4923a 88%,
-      #a86220 100%
-    );
-  background-repeat: no-repeat, no-repeat;
-  background-position: center, 0 0;
-  background-size: cover, auto;
-  background-origin: border-box, border-box;
-  background-clip: padding-box, border-box;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
-}
-
-.player-footer__volume input[type='range']:hover::-webkit-slider-thumb {
-  filter: brightness(1.08);
-}
-
-.player-footer__volume input[type='range']::-moz-range-track {
-  height: 8px;
-  border-radius: 999px;
-  border: 1.5px solid transparent;
-  background-color: #1a0f2e;
-  background-image:
-    linear-gradient(
-      to right,
-      transparent 0%,
-      transparent var(--ug-range),
-      rgba(7, 5, 12, 0.72) var(--ug-range),
-      rgba(7, 5, 12, 0.72) 100%
-    ),
-    url('../../assets/buttons/purple 2.png'),
-    linear-gradient(
-      145deg,
-      #f6c86a 0%,
-      #e8a84a 22%,
-      #c47a28 48%,
-      #8a4e14 68%,
-      #d4923a 88%,
-      #a86220 100%
-    );
-  background-repeat: no-repeat, no-repeat, no-repeat;
-  background-position: 0 0, center, 0 0;
-  background-size: 100% 100%, 140% 400%, auto;
-  background-origin: border-box, border-box, border-box;
-  background-clip: padding-box, padding-box, border-box;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-}
-
-.player-footer__volume input[type='range']::-moz-range-thumb {
-  box-sizing: border-box;
-  width: 14px;
-  height: 14px;
-  border: 1.5px solid transparent;
-  border-radius: 50%;
-  background-color: #4a2878;
-  background-image:
-    url('../../assets/buttons/purple 2.png'),
-    linear-gradient(
-      145deg,
-      #f6c86a 0%,
-      #e8a84a 22%,
-      #c47a28 48%,
-      #8a4e14 68%,
-      #d4923a 88%,
-      #a86220 100%
-    );
-  background-repeat: no-repeat, no-repeat;
-  background-position: center, 0 0;
-  background-size: cover, auto;
-  background-origin: border-box, border-box;
-  background-clip: padding-box, border-box;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
 }
 
 .player-footer__play {
@@ -591,17 +542,17 @@
   padding: 0;
   box-sizing: border-box;
   border-radius: 50%;
-  color: #f3e9ff !important;
+  color: #d2c6e4 !important;
   overflow: hidden;
   /* Larger asset orb + dark tint + gold rim */
   background-color: #2a1548;
   background-image:
     linear-gradient(
       160deg,
-      rgba(28, 10, 52, 0.42) 0%,
-      rgba(12, 4, 28, 0.58) 100%
+      rgba(72, 18, 130, 0.34) 0%,
+      rgba(28, 6, 58, 0.46) 100%
     ),
-    url('../../assets/buttons/purple 2.png'),
+    url('../../assets/buttons/circle button .png'),
     linear-gradient(
       145deg,
       #f6c86a 0%,
@@ -632,14 +583,14 @@
 }
 
 .player-footer__play:hover:not(:disabled) {
-  color: #fffaf8 !important;
+  color: #d8cee4 !important;
   background-image:
     linear-gradient(
       160deg,
-      rgba(40, 16, 72, 0.32) 0%,
-      rgba(18, 6, 40, 0.48) 100%
+      rgba(40, 16, 72, 0.26) 0%,
+      rgba(18, 6, 40, 0.38) 100%
     ),
-    url('../../assets/buttons/purple 2.png'),
+    url('../../assets/buttons/circle button .png'),
     linear-gradient(
       145deg,
       #f8d078 0%,
@@ -688,7 +639,7 @@
 }
 
 .player-footer__seek-rail input[type='range'],
-.player-footer__volume input[type='range'] {
+.player-footer__volume .ug-slider {
   width: 100%;
 }
 

@@ -125,6 +125,7 @@ export function PlaylistRecommended({
                   aria-label={
                     active && isPlaying ? `Pause ${track.title}` : `Play ${track.title}`
                   }
+                  data-no-groove-tip
                   onClick={() => {
                     focusTrack(track)
                     if (active) togglePlay()
@@ -141,6 +142,7 @@ export function PlaylistRecommended({
                   type="button"
                   className="playlist-rec__main"
                   aria-label={`Play ${track.title}`}
+                  data-no-groove-tip
                   onDoubleClick={() => playTrack(track, tracks)}
                   onClick={() => focusTrack(track)}
                 >

@@ -1,4 +1,4 @@
-.playlist-edit {
+﻿.playlist-edit {
   position: fixed;
   inset: 0;
   z-index: 90;
@@ -14,36 +14,11 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: linear-gradient(180deg, #1c152c, #120c1c);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
-  border-radius: 12px;
-}
-
-.playlist-edit__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 18px 20px 12px;
-}
-
-.playlist-edit__head h2 {
-  margin: 0;
-  font-size: 1.15rem;
-  color: var(--ug-text);
-}
-
-.playlist-edit__close {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  color: var(--ug-text-soft);
-}
-
-.playlist-edit__close:hover {
-  color: var(--ug-text);
-  background: rgba(255, 255, 255, 0.06);
+  background: linear-gradient(165deg, #221832 0%, #120c1c 48%, #0d0914 100%);
+  box-shadow:
+    0 28px 70px rgba(0, 0, 0, 0.62),
+    0 0 0 1px rgba(201, 164, 92, 0.22);
+  border-radius: 14px;
 }
 
 .playlist-edit__body {
@@ -96,6 +71,14 @@
   cursor: wait;
 }
 
+.playlist-edit__cover--loved {
+  cursor: default;
+  overflow: visible;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(201, 164, 92, 0.28), transparent 55%),
+    linear-gradient(160deg, #2a1f3d, #120e1a);
+}
+
 .playlist-edit__cover-reset,
 .playlist-edit__cover-note {
   margin: 0;
@@ -114,7 +97,7 @@
 }
 
 .playlist-edit__cover-reset:hover:not(:disabled) {
-  color: #fff;
+  color: #d4c8e6;
 }
 
 .playlist-edit__cover-reset:disabled {
@@ -151,7 +134,7 @@
   justify-content: center;
   gap: 6px;
   background: rgba(7, 5, 12, 0.55);
-  color: #fff;
+  color: #d4c8e6;
   font-size: 12px;
   opacity: 0;
   transition: opacity var(--ug-duration) var(--ug-ease);
@@ -236,30 +219,11 @@
   gap: 10px;
 }
 
-.playlist-edit__accent-pick {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: var(--ug-text);
-  cursor: pointer;
-}
-
-.playlist-edit__accent-pick input[type='color'] {
-  width: 36px;
-  height: 28px;
-  padding: 0;
-  border: 1px solid rgba(242, 235, 255, 0.2);
-  border-radius: 6px;
-  background: transparent;
-  cursor: pointer;
-}
-
 .playlist-edit__accent-hex {
   flex: 1;
   min-width: 0;
   padding: 8px 10px;
-  border: none;
+  border: 1px solid rgba(201, 164, 92, 0.28);
   border-radius: 8px;
   background: rgba(18, 12, 28, 0.85);
   color: var(--ug-text);
@@ -268,54 +232,45 @@
   font-variant-numeric: tabular-nums;
 }
 
+.playlist-edit__accent-hex:focus {
+  outline: 1px solid rgba(201, 164, 92, 0.45);
+}
+
 .playlist-edit__accent-hex:disabled {
   opacity: 0.55;
 }
 
 .playlist-edit__accent-auto {
   align-self: flex-start;
-  padding: 6px 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(242, 235, 255, 0.28);
-  background: transparent;
-  color: rgba(242, 235, 255, 0.88);
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(201, 164, 92, 0.28);
+  background:
+    radial-gradient(ellipse at 12% 0%, rgba(123, 77, 184, 0.14), transparent 55%),
+    linear-gradient(180deg, rgba(18, 12, 30, 0.92), rgba(8, 5, 14, 0.96));
+  color: rgba(200, 188, 220, 0.88);
   font-size: 12px;
   font-weight: 600;
+  cursor: pointer;
 }
 
 .playlist-edit__accent-auto:hover:not(:disabled) {
-  border-color: rgba(242, 235, 255, 0.5);
+  border-color: rgba(201, 164, 92, 0.45);
+  color: var(--ug-gold-bright);
 }
 
 .playlist-edit__accent-auto.is-active {
   border-color: rgba(201, 164, 92, 0.55);
   color: var(--ug-gold-bright);
-  background: rgba(201, 164, 92, 0.1);
+  background:
+    radial-gradient(ellipse at 12% 0%, rgba(123, 77, 184, 0.28), transparent 50%),
+    linear-gradient(180deg, rgba(74, 40, 120, 0.55), rgba(28, 14, 52, 0.75));
 }
 
 .playlist-edit__foot {
   display: flex;
   justify-content: flex-end;
-  padding: 8px 20px 20px;
-}
-
-.playlist-edit__save {
-  padding: 12px 32px;
-  border-radius: 999px;
-  border: none;
-  background: #f2ebff;
-  color: #120c1c;
-  font-weight: 700;
-  font-size: 14px;
-}
-
-.playlist-edit__save:hover:not(:disabled) {
-  transform: scale(1.03);
-}
-
-.playlist-edit__save:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
+  padding: 12px 22px 22px;
 }
 
 .playlist-edit__visually-hidden {

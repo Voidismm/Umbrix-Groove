@@ -38,20 +38,117 @@ const VIS_KEY = 'umbrix.visualizer.visId'
 const PRESET_KEY = 'umbrix.visualizer.presetId'
 const THEME_KEY = 'umbrix.visualizer.theme'
 const HUE_KEY = 'umbrix.visualizer.hue'
+const FAV_KEY = 'umbrix.visualizer.favorites'
+const FOLDER_KEY = 'umbrix.visualizer.folders'
+const RAIL_W_KEY = 'umbrix.visualizer.railWidth'
+const RAIL_COLLAPSE_KEY = 'umbrix.visualizer.railCollapsed'
+const PREFS_KEY = 'umbrix.visualizer.chromePrefs'
+const RAIL_MIN = 260
+const RAIL_MAX = 480
+const RAIL_DEFAULT = 320
+const RAIL_COLLAPSED = 48
 
-const FAMILIES: VisFamily[] = [
+type ChromePrefs = {
+  /** Title (top-left) + guide hint (bottom-left). Default on. */
+  showOverlayText: boolean
+  /** Keep player footer visible in fullscreen. Default off. */
+  alwaysShowFooter: boolean
+  /** Keep viz sidebar visible in fullscreen. Default off. */
+  alwaysShowSidebar: boolean
+  /** Display prefs panel open. Default collapsed. */
+  displayOpen: boolean
+}
+
+const DEFAULT_CHROME_PREFS: ChromePrefs = {
+  showOverlayText: true,
+  alwaysShowFooter: false,
+  alwaysShowSidebar: false,
+  displayOpen: false
+}
+
+function loadChromePrefs(): ChromePrefs {
+  try {
+    const raw = JSON.parse(localStorage.getItem(PREFS_KEY) ?? '{}') as Partial<ChromePrefs>
+    return {
+      showOverlayText: raw.showOverlayText !== false,
+      alwaysShowFooter: !!raw.alwaysShowFooter,
+      alwaysShowSidebar: !!raw.alwaysShowSidebar,
+      displayOpen: !!raw.displayOpen
+    }
+  } catch {
+    return { ...DEFAULT_CHROME_PREFS }
+  }
+}
+
+const DEFAULT_FAMILIES: VisFamily[] = [
   'ambience',
   'reactive',
   'bars-and-waves',
-  'musical-colors',
-  'milkdrop'
+  'musical-colors'
 ]
+
+type FolderId = 'favorites' | 'milkdrop' | 'defaults'
+
+type FolderOpenState = Record<FolderId, boolean>
+
+/** Default viz: `visId`. Milkdrop presets: `visId::presetId`. */
+function presetFavKey(visId: string, presetId: string): string {
+  return `${visId}::${presetId}`
+}
+
+function parseFavKey(key: string): { visId: string; presetId: string | null } {
+  const sep = key.indexOf('::')
+  if (sep < 0) return { visId: key, presetId: null }
+  return { visId: key.slice(0, sep), presetId: key.slice(sep + 2) }
+}
+
+function loadFavorites(): string[] {
+  try {
+    const raw = JSON.parse(localStorage.getItem(FAV_KEY) ?? '[]') as unknown
+    if (!Array.isArray(raw)) return []
+    return raw.filter((id): id is string => typeof id === 'string' && id.length > 0)
+  } catch {
+    return []
+  }
+}
+
+function loadFolders(): FolderOpenState {
+  const fallback: FolderOpenState = { favorites: true, milkdrop: true, defaults: true }
+  try {
+    const raw = JSON.parse(localStorage.getItem(FOLDER_KEY) ?? '{}') as Partial<FolderOpenState>
+    return {
+      favorites: raw.favorites !== false,
+      milkdrop: raw.milkdrop !== false,
+      defaults: raw.defaults !== false
+    }
+  } catch {
+    return fallback
+  }
+}
 
 function loadStored(key: string, fallback: string): string {
   try {
     return localStorage.getItem(key) ?? fallback
   } catch {
     return fallback
+  }
+}
+
+function loadRailWidth(): number {
+  try {
+    const n = Number(localStorage.getItem(RAIL_W_KEY))
+    if (Number.isFinite(n)) return Math.min(RAIL_MAX, Math.max(RAIL_MIN, Math.round(n)))
+  } catch {
+    /* ignore */
+  }
+  return RAIL_DEFAULT
+}
+
+function loadRailCollapsed(): boolean {
+  try {
+    return localStorage.getItem(RAIL_COLLAPSE_KEY) === '1'
+  } catch {
+    return false
   }
 }
 
@@ -92,12 +189,25 @@ export function VisualizerStage(): React.JSX.Element | null {
   const [visId, setVisId] = useState(() => loadStored(VIS_KEY, 'battery'))
   const [presetId, setPresetId] = useState(() => loadStored(PRESET_KEY, 'randomization'))
   const [color, setColor] = useState<ColorSettings>(loadColor)
+  const [favorites, setFavorites] = useState<string[]>(loadFavorites)
+  const [foldersOpen, setFoldersOpen] = useState<FolderOpenState>(loadFolders)
+  const [fullscreen, setFullscreen] = useState(false)
+  const [chromeVisible, setChromeVisible] = useState(true)
+  const [railWidth, setRailWidth] = useState(loadRailWidth)
+  const [railCollapsed, setRailCollapsed] = useState(loadRailCollapsed)
+  const [chromePrefs, setChromePrefs] = useState<ChromePrefs>(loadChromePrefs)
   const colorRef = useRef(color)
   const visIdRef = useRef(visId)
   const presetIdRef = useRef(presetId)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const butterCanvasRef = useRef<HTMLCanvasElement>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
+  const stageRef = useRef<HTMLDivElement>(null)
+  const chromeTimerRef = useRef<number | null>(null)
+  const chromeHoldRef = useRef(false)
+  const railDragRef = useRef<{ startX: number; startW: number } | null>(null)
+  const railWidthRef = useRef(railWidth)
+  railWidthRef.current = railWidth
   const samplerRef = useRef(new GrooveAudioSampler())
   const isPlayingRef = useRef(isPlaying)
   const getFrameRef = useRef(getAnalyserFrame)
@@ -106,6 +216,8 @@ export function VisualizerStage(): React.JSX.Element | null {
   const butterOk = useMemo(() => isButterchurnSupportedCached(), [])
   /** Fresh DOM canvas each Milkdrop session — WEBGL_lose_context poisons a canvas forever. */
   const [butterEpoch, setButterEpoch] = useState(0)
+  /** Same poison rule for Three — remount the canvas after loseContext teardown. */
+  const [threeEpoch, setThreeEpoch] = useState(0)
   const butterRetryRef = useRef(0)
 
   visIdRef.current = visId
@@ -119,9 +231,12 @@ export function VisualizerStage(): React.JSX.Element | null {
   const engine = engineOf(activeVis)
 
   useEffect(() => {
-    if (visualizerOpen && engine === 'butterchurn') {
+    if (!visualizerOpen) return
+    if (engine === 'butterchurn') {
       butterRetryRef.current = 0
       setButterEpoch((n) => n + 1)
+    } else if (engine === 'three') {
+      setThreeEpoch((n) => n + 1)
     }
   }, [visualizerOpen, engine])
 
@@ -137,24 +252,142 @@ export function VisualizerStage(): React.JSX.Element | null {
       localStorage.setItem(PRESET_KEY, presetId)
       localStorage.setItem(THEME_KEY, color.theme)
       localStorage.setItem(HUE_KEY, String(color.hue))
+      localStorage.setItem(FAV_KEY, JSON.stringify(favorites))
+      localStorage.setItem(FOLDER_KEY, JSON.stringify(foldersOpen))
+      localStorage.setItem(RAIL_W_KEY, String(railWidth))
+      localStorage.setItem(RAIL_COLLAPSE_KEY, railCollapsed ? '1' : '0')
+      localStorage.setItem(PREFS_KEY, JSON.stringify(chromePrefs))
     } catch {
       /* ignore */
     }
-  }, [visId, presetId, color])
+  }, [visId, presetId, color, favorites, foldersOpen, railWidth, railCollapsed, chromePrefs])
+
+  const railOccupy = railCollapsed ? RAIL_COLLAPSED : railWidth
+  const footerPinned = chromePrefs.alwaysShowFooter
+  const sidebarPinned = chromePrefs.alwaysShowSidebar
+  const sidebarShowing = !fullscreen || chromeVisible || sidebarPinned
+  const footerShowing = !fullscreen || chromeVisible || footerPinned
+  /** In fullscreen, chrome-hide also tucks the rail so it is not in the way. */
+  const railLayout = sidebarShowing ? railOccupy : 0
+
+  const patchChromePrefs = (patch: Partial<ChromePrefs>): void => {
+    setChromePrefs((prev) => ({ ...prev, ...patch }))
+  }
+
+  useEffect(() => {
+    const root = document.documentElement
+    root.style.setProperty('--ug-viz-rail', `${railLayout}px`)
+    root.dataset.vizRail = railCollapsed ? 'collapsed' : 'open'
+    return () => {
+      root.style.removeProperty('--ug-viz-rail')
+      delete root.dataset.vizRail
+    }
+  }, [railLayout, railCollapsed])
 
   useEffect(() => {
     if (!visualizerOpen) return
     void ensureAudioAnalyser()
   }, [visualizerOpen, ensureAudioAnalyser, isPlaying])
 
+  const clearChromeTimer = (): void => {
+    if (chromeTimerRef.current != null) {
+      window.clearTimeout(chromeTimerRef.current)
+      chromeTimerRef.current = null
+    }
+  }
+
+  const scheduleChromeHide = (): void => {
+    clearChromeTimer()
+    chromeTimerRef.current = window.setTimeout(() => {
+      if (chromeHoldRef.current) return
+      setChromeVisible(false)
+      chromeTimerRef.current = null
+    }, 1800)
+  }
+
+  const bumpChrome = (): void => {
+    if (!fullscreen) return
+    setChromeVisible(true)
+    if (!chromeHoldRef.current) scheduleChromeHide()
+  }
+
+  useEffect(() => {
+    const root = document.documentElement
+    if (!visualizerOpen || !fullscreen) {
+      delete root.dataset.vizFullscreen
+      delete root.dataset.vizChrome
+      delete root.dataset.vizFooter
+      delete root.dataset.vizSidebar
+      clearChromeTimer()
+      chromeHoldRef.current = false
+      return
+    }
+    root.dataset.vizFullscreen = 'true'
+    root.dataset.vizChrome = chromeVisible ? 'visible' : 'hidden'
+    root.dataset.vizFooter = footerShowing ? 'visible' : 'hidden'
+    root.dataset.vizSidebar = sidebarShowing ? 'visible' : 'hidden'
+  }, [visualizerOpen, fullscreen, chromeVisible, footerShowing, sidebarShowing])
+
+  useEffect(() => {
+    if (!visualizerOpen) {
+      setFullscreen(false)
+      setChromeVisible(true)
+      clearChromeTimer()
+      delete document.documentElement.dataset.vizFullscreen
+      delete document.documentElement.dataset.vizChrome
+      delete document.documentElement.dataset.vizFooter
+      delete document.documentElement.dataset.vizSidebar
+    }
+  }, [visualizerOpen])
+
+  useEffect(() => {
+    if (!visualizerOpen || !fullscreen) return
+
+    const onMove = (): void => bumpChrome()
+    const onHoldEnter = (): void => {
+      chromeHoldRef.current = true
+      clearChromeTimer()
+      setChromeVisible(true)
+    }
+    const onHoldLeave = (): void => {
+      chromeHoldRef.current = false
+      scheduleChromeHide()
+    }
+
+    window.addEventListener('mousemove', onMove)
+    const footer = document.querySelector('.player-footer')
+    const rail = stageRef.current?.querySelector('.visualizer-stage__rail')
+    footer?.addEventListener('mouseenter', onHoldEnter)
+    footer?.addEventListener('mouseleave', onHoldLeave)
+    rail?.addEventListener('mouseenter', onHoldEnter)
+    rail?.addEventListener('mouseleave', onHoldLeave)
+    bumpChrome()
+
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      footer?.removeEventListener('mouseenter', onHoldEnter)
+      footer?.removeEventListener('mouseleave', onHoldLeave)
+      rail?.removeEventListener('mouseenter', onHoldEnter)
+      rail?.removeEventListener('mouseleave', onHoldLeave)
+      clearChromeTimer()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bump/schedule are stable enough for this mount
+  }, [visualizerOpen, fullscreen, footerPinned, sidebarPinned])
+
   // Three.js / now-playing path
   useEffect(() => {
-    if (!visualizerOpen || engine !== 'three') return
+    if (!visualizerOpen || engine !== 'three' || threeEpoch < 1) return
     const canvas = canvasRef.current
     const viewport = viewportRef.current
     if (!canvas || !viewport) return
 
-    const renderer = createRenderer(canvas)
+    let renderer: ReturnType<typeof createRenderer>
+    try {
+      renderer = createRenderer(canvas)
+    } catch (err) {
+      console.error('[Visualizer] Three WebGL init failed', err)
+      return
+    }
     const audioTextures = createAudioTextures()
     let active: Visualization | null = null
     let currentId = ''
@@ -171,15 +404,26 @@ export function VisualizerStage(): React.JSX.Element | null {
       currentId = id
     }
 
+    const measure = (): { cssW: number; cssH: number } => {
+      const r = viewport.getBoundingClientRect()
+      return {
+        cssW: Math.max(2, Math.floor(r.width || viewport.clientWidth || 2)),
+        cssH: Math.max(2, Math.floor(r.height || viewport.clientHeight || 2))
+      }
+    }
+
     const resize = (): void => {
       if (isShellResizing()) return
-      const { w, h } = fitRenderer(renderer, viewport.clientWidth, viewport.clientHeight)
+      const { cssW, cssH } = measure()
+      const { w, h } = fitRenderer(renderer, cssW, cssH)
       active?.resize(w, h)
     }
 
     mountVis(visIdRef.current)
     resize()
-    const ro = new ResizeObserver(resize)
+    const ro = new ResizeObserver(() => {
+      requestAnimationFrame(resize)
+    })
     ro.observe(viewport)
     window.addEventListener(SHELL_RESIZE_END_EVENT, resize)
 
@@ -212,8 +456,15 @@ export function VisualizerStage(): React.JSX.Element | null {
       active?.dispose()
       audioTextures.dispose()
       renderer.dispose()
+      // Drop the GL context so leaving the viz returns GPU memory to the shell.
+      try {
+        const gl = renderer.getContext()
+        gl?.getExtension('WEBGL_lose_context')?.loseContext()
+      } catch {
+        /* ignore */
+      }
     }
-  }, [visualizerOpen, catalog, engine])
+  }, [visualizerOpen, catalog, engine, threeEpoch])
 
   // Butterchurn Milkdrop path (own WebGL2 canvas — cannot share with Three)
   useEffect(() => {
@@ -227,6 +478,8 @@ export function VisualizerStage(): React.JSX.Element | null {
     let visualizer: ButterchurnVisualizer | null = null
     let ro: ResizeObserver | null = null
     let onShellResizeEnd: (() => void) | null = null
+    /** Canvas for this session — keep a handle so teardown can release GL after unmount. */
+    const sessionCanvas = canvas
 
     const waveScratch = new Uint8Array(BUTTERCHURN_FFT_SIZE)
 
@@ -244,12 +497,23 @@ export function VisualizerStage(): React.JSX.Element | null {
       if (!live) return
 
       const rect = viewport.getBoundingClientRect()
-      // Butterchurn multiplies width/height by pixelRatio itself — pass CSS pixels only.
       const cssW = Math.max(2, Math.floor(rect.width || viewport.clientWidth || 800))
       const cssH = Math.max(2, Math.floor(rect.height || viewport.clientHeight || 600))
-      const pixelRatio = Math.min(2, window.devicePixelRatio || 1)
-      live.width = Math.floor(cssW * pixelRatio)
-      live.height = Math.floor(cssH * pixelRatio)
+      /*
+        Butterchurn bug/quirk: final blit uses gl.viewport(0,0, width, height),
+        while textures use width*pixelRatio. With pixelRatio>1 only the
+        bottom-left of the canvas is painted (black strip on the right/top).
+        Bake DPR into width/height and keep pixelRatio at 1.
+      */
+      const dpr = Math.min(2, window.devicePixelRatio || 1)
+      const bufW = Math.max(2, Math.floor(cssW * dpr))
+      const bufH = Math.max(2, Math.floor(cssH * dpr))
+      live.width = bufW
+      live.height = bufH
+      live.style.width = '100%'
+      live.style.height = '100%'
+      live.style.maxWidth = 'none'
+      live.style.maxHeight = 'none'
 
       // Probe before Butterchurn — null gl means a poisoned canvas (after loseContext).
       const probe = live.getContext('webgl2', {
@@ -268,9 +532,9 @@ export function VisualizerStage(): React.JSX.Element | null {
       let next: ButterchurnVisualizer
       try {
         next = getButterchurn().createVisualizer(graph.context, live, {
-          width: cssW,
-          height: cssH,
-          pixelRatio,
+          width: bufW,
+          height: bufH,
+          pixelRatio: 1,
           textureRatio: 1
         })
       } catch (err) {
@@ -278,7 +542,16 @@ export function VisualizerStage(): React.JSX.Element | null {
         remountButterCanvas()
         return
       }
-      if (disposed) return
+      if (disposed) {
+        // Created after close — release immediately so it cannot pin GPU memory.
+        try {
+          const gl = live.getContext('webgl2')
+          gl?.getExtension('WEBGL_lose_context')?.loseContext()
+        } catch {
+          /* ignore */
+        }
+        return
+      }
 
       // Tap the shared MediaElementSource (also feed levels manually each frame below).
       try {
@@ -304,7 +577,7 @@ export function VisualizerStage(): React.JSX.Element | null {
       }
 
       const resize = (): void => {
-        if (isShellResizing()) return
+        if (disposed || isShellResizing()) return
         if (!visualizer) return
         const el = butterCanvasRef.current
         if (!el) return
@@ -312,13 +585,22 @@ export function VisualizerStage(): React.JSX.Element | null {
         const rw = Math.max(2, Math.floor(r.width || viewport.clientWidth || 800))
         const rh = Math.max(2, Math.floor(r.height || viewport.clientHeight || 600))
         const ratio = Math.min(2, window.devicePixelRatio || 1)
-        el.width = Math.floor(rw * ratio)
-        el.height = Math.floor(rh * ratio)
-        // Same contract as createVisualizer: CSS pixels; library applies pixelRatio.
-        visualizer.setRendererSize(rw, rh, { pixelRatio: ratio })
+        const bw = Math.max(2, Math.floor(rw * ratio))
+        const bh = Math.max(2, Math.floor(rh * ratio))
+        el.width = bw
+        el.height = bh
+        el.style.width = '100%'
+        el.style.height = '100%'
+        el.style.maxWidth = 'none'
+        el.style.maxHeight = 'none'
+        // width/height must match the canvas buffer (see createVisualizer note above).
+        visualizer.setRendererSize(bw, bh, { pixelRatio: 1 })
       }
       resize()
-      ro = new ResizeObserver(resize)
+      ro = new ResizeObserver(() => {
+        if (disposed) return
+        requestAnimationFrame(resize)
+      })
       ro.observe(viewport)
       onShellResizeEnd = resize
       window.addEventListener(SHELL_RESIZE_END_EVENT, resize)
@@ -335,6 +617,7 @@ export function VisualizerStage(): React.JSX.Element | null {
         }
         raf = requestAnimationFrame(tick)
       }
+      if (disposed) return
       raf = requestAnimationFrame(tick)
     }
 
@@ -358,7 +641,13 @@ export function VisualizerStage(): React.JSX.Element | null {
       butterRef.current = null
       butterNodeRef.current = null
       visualizer = null
-      // Do NOT call WEBGL_lose_context here — that permanently kills the canvas.
+      // Safe on close: this canvas is unmounted; next open bumps butterEpoch for a fresh one.
+      try {
+        const gl = sessionCanvas.getContext('webgl2')
+        gl?.getExtension('WEBGL_lose_context')?.loseContext()
+      } catch {
+        /* ignore */
+      }
     }
   }, [
     visualizerOpen,
@@ -388,7 +677,23 @@ export function VisualizerStage(): React.JSX.Element | null {
     if (!visualizerOpen) return
     const onKey = (event: KeyboardEvent): void => {
       if (event.key === 'Escape') {
+        if (fullscreen) {
+          setFullscreen(false)
+          setChromeVisible(true)
+          return
+        }
         setVisualizerOpen(false)
+        return
+      }
+      if (event.key === 'f' || event.key === 'F') {
+        const t = event.target
+        if (t instanceof HTMLElement) {
+          const tag = t.tagName
+          if (tag === 'INPUT' || tag === 'TEXTAREA' || t.isContentEditable) return
+        }
+        event.preventDefault()
+        setFullscreen((prev) => !prev)
+        setChromeVisible(true)
         return
       }
       if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
@@ -426,7 +731,7 @@ export function VisualizerStage(): React.JSX.Element | null {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [visualizerOpen, setVisualizerOpen, catalog])
+  }, [visualizerOpen, setVisualizerOpen, catalog, fullscreen])
 
   if (!visualizerOpen) return null
 
@@ -435,12 +740,232 @@ export function VisualizerStage(): React.JSX.Element | null {
     setPresetId(nextPresetId)
   }
 
+  const toggleFavorite = (key: string): void => {
+    setFavorites((prev) =>
+      prev.includes(key) ? prev.filter((item) => item !== key) : [...prev, key]
+    )
+  }
+
+  const toggleFolder = (id: FolderId): void => {
+    setFoldersOpen((prev) => ({ ...prev, [id]: !prev[id] }))
+  }
+
   const showColor = engine === 'three'
+  const milkdropItems = catalog.filter((v) => v.family === 'milkdrop')
+  const defaultItems = catalog.filter((v) => DEFAULT_FAMILIES.includes(v.family))
+  const milkdropCount = milkdropItems.reduce((sum, vis) => sum + vis.presets.length, 0)
+
+  const beginRailResize = (event: React.PointerEvent<HTMLDivElement>): void => {
+    if (railCollapsed) return
+    event.preventDefault()
+    railDragRef.current = { startX: event.clientX, startW: railWidthRef.current }
+    event.currentTarget.setPointerCapture(event.pointerId)
+  }
+
+  const moveRailResize = (event: React.PointerEvent<HTMLDivElement>): void => {
+    const drag = railDragRef.current
+    if (!drag) return
+    // Dragging the left edge of the rail: move left = wider rail.
+    const next = Math.min(
+      RAIL_MAX,
+      Math.max(RAIL_MIN, Math.round(drag.startW + (drag.startX - event.clientX)))
+    )
+    setRailWidth(next)
+  }
+
+  const endRailResize = (event: React.PointerEvent<HTMLDivElement>): void => {
+    if (!railDragRef.current) return
+    railDragRef.current = null
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+  }
+
+  const renderStar = (key: string, label: string): React.JSX.Element => {
+    const starred = favorites.includes(key)
+    return (
+      <button
+        type="button"
+        className={`visualizer-stage__star${starred ? ' is-on' : ''}`}
+        aria-label={starred ? `Remove ${label} from favorites` : `Favorite ${label}`}
+        aria-pressed={starred}
+        data-groove-tip={starred ? 'Remove from favorites' : 'Add to favorites'}
+        onClick={() => toggleFavorite(key)}
+      >
+        <Icon name={starred ? 'star-filled' : 'star'} size={20} />
+      </button>
+    )
+  }
+
+  /** Groove / default visuals — star the whole visual. */
+  const renderVisList = (items: Visualization[]): React.JSX.Element => (
+    <>
+      {items.map((vis) => {
+        const open = vis.id === visId
+        return (
+          <div key={vis.id} className={`visualizer-stage__vis${open ? ' is-active' : ''}`}>
+            <div className="visualizer-stage__vis-row">
+              <button
+                type="button"
+                className="visualizer-stage__vis-btn"
+                aria-expanded={open}
+                onClick={() => pick(vis.id, vis.presets[0]!.id)}
+              >
+                <span>{vis.name}</span>
+                <em>{vis.era}</em>
+              </button>
+              {renderStar(vis.id, vis.name)}
+            </div>
+            {open ? (
+              <ul className="visualizer-stage__presets">
+                {vis.presets.map((preset) => (
+                  <li key={preset.id}>
+                    <button
+                      type="button"
+                      className={
+                        preset.id === presetId && vis.id === visId
+                          ? 'visualizer-stage__preset is-on'
+                          : 'visualizer-stage__preset'
+                      }
+                      onClick={() => pick(vis.id, preset.id)}
+                      title={preset.kind === 'milkdrop' ? preset.key : preset.name}
+                    >
+                      {preset.name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        )
+      })}
+    </>
+  )
+
+  /** Milkdrop — same card look as default visuals; each preset is its own starred row. */
+  const renderMilkdropPresets = (items: Visualization[]): React.JSX.Element => (
+    <>
+      {items.map((vis) => (
+        <div key={vis.id} className="visualizer-stage__subfamily">
+          <h4>{vis.era}</h4>
+          {vis.presets.map((preset) => {
+            const key = presetFavKey(vis.id, preset.id)
+            const on = vis.id === visId && preset.id === presetId
+            return (
+              <div
+                key={key}
+                className={`visualizer-stage__vis${on ? ' is-active' : ''}`}
+              >
+                <div className="visualizer-stage__vis-row">
+                  <button
+                    type="button"
+                    className="visualizer-stage__vis-btn"
+                    onClick={() => pick(vis.id, preset.id)}
+                    title={preset.kind === 'milkdrop' ? preset.key : preset.name}
+                  >
+                    <span>{preset.name}</span>
+                    <em>{vis.name}</em>
+                  </button>
+                  {renderStar(key, preset.name)}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      ))}
+    </>
+  )
+
+  const renderFavorites = (): React.JSX.Element => (
+    <>
+      {favorites.map((key) => {
+        const { visId: favVisId, presetId: favPresetId } = parseFavKey(key)
+        const vis = catalog.find((v) => v.id === favVisId)
+        if (!vis) return null
+
+        if (favPresetId) {
+          const preset = vis.presets.find((p) => p.id === favPresetId)
+          if (!preset) return null
+          const on = vis.id === visId && preset.id === presetId
+          return (
+            <div key={key} className={`visualizer-stage__vis${on ? ' is-active' : ''}`}>
+              <div className="visualizer-stage__vis-row">
+                <button
+                  type="button"
+                  className="visualizer-stage__vis-btn"
+                  onClick={() => pick(vis.id, preset.id)}
+                  title={preset.kind === 'milkdrop' ? preset.key : preset.name}
+                >
+                  <span>{preset.name}</span>
+                  <em>{vis.name}</em>
+                </button>
+                {renderStar(key, preset.name)}
+              </div>
+            </div>
+          )
+        }
+
+        const open = vis.id === visId
+        return (
+          <div key={key} className={`visualizer-stage__vis${open ? ' is-active' : ''}`}>
+            <div className="visualizer-stage__vis-row">
+              <button
+                type="button"
+                className="visualizer-stage__vis-btn"
+                aria-expanded={open}
+                onClick={() => pick(vis.id, vis.presets[0]!.id)}
+              >
+                <span>{vis.name}</span>
+                <em>{vis.era}</em>
+              </button>
+              {renderStar(vis.id, vis.name)}
+            </div>
+            {open ? (
+              <ul className="visualizer-stage__presets">
+                {vis.presets.map((preset) => (
+                  <li key={preset.id}>
+                    <button
+                      type="button"
+                      className={
+                        preset.id === presetId
+                          ? 'visualizer-stage__preset is-on'
+                          : 'visualizer-stage__preset'
+                      }
+                      onClick={() => pick(vis.id, preset.id)}
+                    >
+                      {preset.name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        )
+      })}
+    </>
+  )
 
   return (
-    <div className="visualizer-stage" role="dialog" aria-label="Music visualizer">
-      <div className="visualizer-stage__viewport" ref={viewportRef}>
+    <div
+      ref={stageRef}
+      className={`visualizer-stage${fullscreen ? ' is-fullscreen' : ''}${
+        railCollapsed ? ' is-rail-collapsed' : ''
+      }${fullscreen && !sidebarShowing ? ' is-chrome-hidden' : ''}`}
+      style={{ gridTemplateColumns: `minmax(0, 1fr) ${railLayout}px` }}
+      role="dialog"
+      aria-label="Music visualizer"
+    >
+      <div
+        className="visualizer-stage__viewport"
+        ref={viewportRef}
+        onDoubleClick={(event) => {
+          if ((event.target as HTMLElement).closest('button')) return
+          setFullscreen((prev) => !prev)
+          setChromeVisible(true)
+        }}
+      >
         <canvas
+          key={`three-${threeEpoch}`}
           ref={canvasRef}
           className={`visualizer-stage__canvas${engine === 'three' ? '' : ' is-hidden'}`}
         />
@@ -454,41 +979,114 @@ export function VisualizerStage(): React.JSX.Element | null {
         {engine === 'butterchurn' && !butterOk ? (
           <p className="visualizer-stage__engine-note">Milkdrop needs WebGL2 on this machine.</p>
         ) : null}
-        <div className="visualizer-stage__chrome">
-          <div className="visualizer-stage__meta">
-            <strong>{currentTrack?.title ?? 'Nothing playing'}</strong>
-            <span>
-              {activeVis.name}
-              {' · '}
-              {activePreset.name}
-              {currentTrack?.artistName ? ` · ${currentTrack.artistName}` : ''}
-              {!isPlaying && currentTrack ? ' · paused' : ''}
-            </span>
-          </div>
-        </div>
-        <p className="visualizer-stage__hint">
-          ↑↓ viz · ←→ preset
-          {showColor ? ' · [ ] color · , . hue' : ''} · Esc to leave
-        </p>
+        {chromePrefs.showOverlayText ? (
+          <>
+            <div className="visualizer-stage__chrome">
+              <div className="visualizer-stage__meta">
+                <strong>{currentTrack?.title ?? 'Nothing playing'}</strong>
+                <span>
+                  {activeVis.name}
+                  {' · '}
+                  {activePreset.name}
+                  {currentTrack?.artistName ? ` · ${currentTrack.artistName}` : ''}
+                  {!isPlaying && currentTrack ? ' · paused' : ''}
+                </span>
+              </div>
+            </div>
+            <p className="visualizer-stage__hint">
+              ↑↓ viz · ←→ preset
+              {showColor ? ' · [ ] color · , . hue' : ''} · double-click or F · Esc to leave
+            </p>
+          </>
+        ) : null}
+        <button
+          type="button"
+          className={`visualizer-stage__fs-btn${fullscreen ? ' is-on is-fullscreen-pos' : ''}${
+            fullscreen && !chromeVisible && !footerPinned ? ' is-chrome-hidden' : ''
+          }`}
+          aria-label={fullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+          aria-pressed={fullscreen}
+          data-groove-tip={fullscreen ? 'Exit fullscreen' : 'Fullscreen visualizer'}
+          onClick={() => {
+            setFullscreen((prev) => !prev)
+            setChromeVisible(true)
+          }}
+          onDoubleClick={(event) => event.stopPropagation()}
+          onMouseEnter={() => {
+            if (!fullscreen) return
+            chromeHoldRef.current = true
+            clearChromeTimer()
+            setChromeVisible(true)
+          }}
+          onMouseLeave={() => {
+            if (!fullscreen) return
+            chromeHoldRef.current = false
+            scheduleChromeHide()
+          }}
+        >
+          <Icon name="fullscreen" size={16} />
+        </button>
       </div>
 
       <aside className="visualizer-stage__rail" aria-label="Visualization catalog">
+        {!railCollapsed ? (
+          <div
+            className="visualizer-stage__rail-resizer"
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Resize visualizations sidebar"
+            aria-valuenow={railWidth}
+            aria-valuemin={RAIL_MIN}
+            aria-valuemax={RAIL_MAX}
+            onPointerDown={beginRailResize}
+            onPointerMove={moveRailResize}
+            onPointerUp={endRailResize}
+            onPointerCancel={endRailResize}
+          />
+        ) : null}
+
         <div className="visualizer-stage__rail-head">
-          <div>
-            <p className="visualizer-stage__rail-kicker">Now Playing</p>
-            <h2>Visualizations</h2>
-          </div>
-          <button
-            type="button"
-            className="visualizer-stage__close"
-            aria-label="Close visualizer"
-            onClick={() => setVisualizerOpen(false)}
-          >
-            <Icon name="close" size={14} />
-          </button>
+          {railCollapsed ? (
+            <button
+              type="button"
+              className="visualizer-stage__rail-expand"
+              aria-label="Expand visualizations sidebar"
+              data-groove-tip="Expand sidebar"
+              onClick={() => setRailCollapsed(false)}
+            >
+              <Icon name="panel-right" size={18} />
+            </button>
+          ) : (
+            <>
+              <div>
+                <p className="visualizer-stage__rail-kicker">Now Playing</p>
+                <h2>Visualizations</h2>
+              </div>
+              <div className="visualizer-stage__rail-actions">
+                <button
+                  type="button"
+                  className="visualizer-stage__rail-tool"
+                  aria-label="Collapse visualizations sidebar"
+                  data-groove-tip="Collapse sidebar"
+                  onClick={() => setRailCollapsed(true)}
+                >
+                  <Icon name="panel-right" size={16} />
+                </button>
+                <button
+                  type="button"
+                  className="visualizer-stage__rail-tool"
+                  aria-label="Close visualizer"
+                  data-groove-tip="Close visualizer"
+                  onClick={() => setVisualizerOpen(false)}
+                >
+                  <Icon name="close" size={16} />
+                </button>
+              </div>
+            </>
+          )}
         </div>
 
-        <div className="visualizer-stage__rail-scroll">
+        <div className="visualizer-stage__rail-scroll" hidden={railCollapsed}>
           {showColor ? (
             <section className="visualizer-stage__family visualizer-stage__colors">
               <h3>Color</h3>
@@ -523,11 +1121,18 @@ export function VisualizerStage(): React.JSX.Element | null {
                   <span>Hue shift</span>
                   <input
                     type="range"
+                    className="ug-slider visualizer-stage__hue-slider"
                     min={0}
                     max={1}
                     step={0.01}
                     value={color.hue}
                     aria-label="Hue shift"
+                    style={
+                      {
+                        ['--ug-range' as string]: `${Math.min(100, Math.max(0, color.hue * 100))}%`,
+                        ['--ug-hue' as string]: String(color.hue)
+                      } as React.CSSProperties
+                    }
                     onChange={(event) =>
                       setColor((prev) => ({ ...prev, hue: Number(event.target.value) }))
                     }
@@ -544,57 +1149,172 @@ export function VisualizerStage(): React.JSX.Element | null {
             </section>
           )}
 
-          {FAMILIES.map((family) => {
-            const items = catalog.filter((v) => v.family === family)
-            if (items.length === 0) return null
-            if (family === 'milkdrop' && !butterOk) return null
-            return (
-              <section key={family} className="visualizer-stage__family">
-                <h3>{familyLabel(family)}</h3>
-                {items.map((vis) => {
-                  const open = vis.id === visId
-                  return (
-                    <div
-                      key={vis.id}
-                      className={`visualizer-stage__vis${open ? ' is-active' : ''}`}
-                    >
-                      <button
-                        type="button"
-                        className="visualizer-stage__vis-btn"
-                        aria-expanded={open}
-                        onClick={() => pick(vis.id, vis.presets[0]!.id)}
-                      >
-                        <span>{vis.name}</span>
-                        <em>{vis.era}</em>
-                      </button>
-                      {open ? (
-                        <ul className="visualizer-stage__presets">
-                          {vis.presets.map((preset) => (
-                            <li key={preset.id}>
-                              <button
-                                type="button"
-                                className={
-                                  preset.id === presetId
-                                    ? 'visualizer-stage__preset is-on'
-                                    : 'visualizer-stage__preset'
-                                }
-                                onClick={() => pick(vis.id, preset.id)}
-                                title={preset.kind === 'milkdrop' ? preset.key : preset.name}
-                              >
-                                {preset.name}
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : null}
-                    </div>
-                  )
-                })}
-              </section>
-            )
-          })}
+          <VisFolder
+            id="favorites"
+            label="Favorites"
+            count={favorites.length}
+            open={foldersOpen.favorites}
+            onToggle={() => toggleFolder('favorites')}
+            empty={favorites.length === 0}
+            emptyText="Star a visual or Milkdrop preset to pin it here."
+          >
+            {renderFavorites()}
+          </VisFolder>
+
+          <VisFolder
+            id="defaults"
+            label="Default visualizations"
+            count={defaultItems.length}
+            open={foldersOpen.defaults}
+            onToggle={() => toggleFolder('defaults')}
+            empty={defaultItems.length === 0}
+          >
+            {DEFAULT_FAMILIES.map((family) => {
+              const items = defaultItems.filter((v) => v.family === family)
+              if (items.length === 0) return null
+              return (
+                <div key={family} className="visualizer-stage__subfamily">
+                  <h4>{familyLabel(family).replace(/ family$/i, '')}</h4>
+                  {renderVisList(items)}
+                </div>
+              )
+            })}
+          </VisFolder>
+
+          {butterOk ? (
+            <VisFolder
+              id="milkdrop"
+              label="Milkdrop"
+              count={milkdropCount}
+              open={foldersOpen.milkdrop}
+              onToggle={() => toggleFolder('milkdrop')}
+              empty={milkdropCount === 0}
+            >
+              {renderMilkdropPresets(milkdropItems)}
+            </VisFolder>
+          ) : null}
         </div>
+
+        {!railCollapsed ? (
+          <div className="visualizer-stage__rail-foot">
+            <button
+              type="button"
+              className="visualizer-stage__rail-foot-head"
+              aria-expanded={chromePrefs.displayOpen}
+              onClick={() => patchChromePrefs({ displayOpen: !chromePrefs.displayOpen })}
+            >
+              <span className="visualizer-stage__rail-foot-label">Display</span>
+              <span
+                className={`visualizer-stage__folder-chevron${
+                  chromePrefs.displayOpen ? ' is-open' : ''
+                }`}
+                aria-hidden
+              >
+                <Icon name="dropdown" size={28} />
+              </span>
+            </button>
+            {chromePrefs.displayOpen ? (
+              <div className="visualizer-stage__rail-foot-body">
+                <VizPrefToggle
+                  label="Show title & guide text"
+                  checked={chromePrefs.showOverlayText}
+                  onChange={(checked) => patchChromePrefs({ showOverlayText: checked })}
+                />
+                <VizPrefToggle
+                  label="Always keep playback footer menu up in fullscreen"
+                  checked={chromePrefs.alwaysShowFooter}
+                  onChange={(checked) => patchChromePrefs({ alwaysShowFooter: checked })}
+                />
+                <VizPrefToggle
+                  label="Always show sidebar in fullscreen"
+                  checked={chromePrefs.alwaysShowSidebar}
+                  onChange={(checked) => patchChromePrefs({ alwaysShowSidebar: checked })}
+                />
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </aside>
     </div>
+  )
+}
+
+function VizPrefToggle({
+  label,
+  checked,
+  onChange
+}: {
+  label: string
+  checked: boolean
+  onChange: (checked: boolean) => void
+}): React.JSX.Element {
+  return (
+    <div className="visualizer-stage__pref">
+      <span className="visualizer-stage__pref-label">{label}</span>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        aria-label={label}
+        className={`visualizer-stage__switch${checked ? ' is-on' : ''}`}
+        onClick={() => onChange(!checked)}
+      >
+        <span className="visualizer-stage__switch-thumb" />
+      </button>
+    </div>
+  )
+}
+
+function VisFolder({
+  id,
+  label,
+  count,
+  open,
+  onToggle,
+  empty,
+  emptyText,
+  children
+}: {
+  id: FolderId
+  label: string
+  count: number
+  open: boolean
+  onToggle: () => void
+  empty?: boolean
+  emptyText?: string
+  children: React.ReactNode
+}): React.JSX.Element {
+  return (
+    <section className="visualizer-stage__folder" data-folder={id}>
+      <button
+        type="button"
+        className="visualizer-stage__folder-head"
+        aria-expanded={open}
+        onClick={onToggle}
+      >
+        <span className="visualizer-stage__folder-lead">
+          <Icon name="folder" size={16} />
+          <span className="visualizer-stage__folder-label">{label}</span>
+          <span className="visualizer-stage__folder-count" aria-label={`${count} items`}>
+            {count}
+          </span>
+        </span>
+        <span
+          className={`visualizer-stage__folder-chevron${open ? ' is-open' : ''}`}
+          aria-hidden
+        >
+          <Icon name="dropdown" size={28} />
+        </span>
+      </button>
+      {open ? (
+        <div className="visualizer-stage__folder-body">
+          {empty ? (
+            <p className="visualizer-stage__folder-empty">{emptyText ?? 'Nothing here yet.'}</p>
+          ) : (
+            children
+          )}
+        </div>
+      ) : null}
+    </section>
   )
 }

@@ -1,6 +1,6 @@
 /** Local lyrics payload shared across main / preload / renderer. */
 
-export type LyricsSource = 'lrc' | 'txt' | 'embedded-sync' | 'embedded' | 'none'
+export type LyricsSource = 'lrc' | 'txt' | 'embedded-sync' | 'embedded' | 'override' | 'none'
 
 export interface LyricsLine {
   /** Milliseconds from start when synced; null for plain text lines. */

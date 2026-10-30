@@ -11,6 +11,7 @@ import type {
   RelatedTracksResult,
   ScanProgress,
   ScanResult,
+  TrackMetadataPatch,
   TrackQuery,
   TrackQueryResult,
   TrackRow
@@ -55,6 +56,10 @@ export const libraryApi = {
     ipcRenderer.invoke('library:getHomePersonalization'),
   getDailyMixes: (forceRefresh?: boolean): Promise<LocalMix[]> =>
     ipcRenderer.invoke('library:getDailyMixes', forceRefresh === true),
+  getTrackLyricsOverride: (trackId: string): Promise<string | null> =>
+    ipcRenderer.invoke('library:getTrackLyricsOverride', trackId),
+  updateTrackMetadata: (trackId: string, patch: TrackMetadataPatch): Promise<TrackRow> =>
+    ipcRenderer.invoke('library:updateTrackMetadata', trackId, patch),
   onScanProgress: (callback: (progress: ScanProgress) => void): (() => void) => {
     const listener = (_event: IpcRendererEvent, progress: ScanProgress): void => {
       callback(progress)

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
-import logo from '@renderer/assets/umbrix-groove-logo.png'
+import logo from '@renderer/assets/logi idea 2.png'
 import { useLibrary } from '@renderer/features/library'
+import { useSettings } from '@renderer/features/settings'
+import { GalaxySky } from '../ui/GalaxySky'
 import { Icon } from '../ui/Icon'
 import './TitleBar.css'
 
@@ -20,6 +22,7 @@ export function TitleBar({
   onOpenSettings
 }: TitleBarProps): React.JSX.Element {
   const { searchQuery, setSearchQuery, setActiveNav } = useLibrary()
+  const { settings } = useSettings()
   const [draft, setDraft] = useState(searchQuery)
 
   useEffect(() => {
@@ -35,6 +38,9 @@ export function TitleBar({
 
   return (
     <header className="titlebar">
+      {settings.appearance.galaxyChrome !== false ? (
+        <GalaxySky variant="chrome" seed={11} />
+      ) : null}
       <div className="titlebar__brand" aria-label="Umbrix Groove">
         <img
           className="titlebar__crest"
@@ -58,7 +64,7 @@ export function TitleBar({
           aria-pressed={!leftCollapsed}
           onClick={onToggleLeft}
         >
-          <Icon name={leftCollapsed ? 'panel-left' : 'panel-right'} />
+          <Icon name={leftCollapsed ? 'panel-left' : 'panel-right'} size={22} />
         </button>
       </div>
 
@@ -81,11 +87,11 @@ export function TitleBar({
       <div className="titlebar__actions">
         <button
           type="button"
-          className="titlebar__icon-btn"
+          className="titlebar__icon-btn titlebar__icon-btn--settings"
           aria-label="Open settings"
           onClick={onOpenSettings}
         >
-          <Icon name="settings-heart" />
+          <Icon name="settings-heart" size={22} />
         </button>
         <span className="titlebar__actions-rule" aria-hidden />
         <button
@@ -95,7 +101,7 @@ export function TitleBar({
           aria-pressed={rightOpen}
           onClick={onToggleRight}
         >
-          <Icon name={rightOpen ? 'panel-left' : 'panel-right'} />
+          <Icon name={rightOpen ? 'panel-left' : 'panel-right'} size={22} />
         </button>
         <div className="titlebar__window">
           <button

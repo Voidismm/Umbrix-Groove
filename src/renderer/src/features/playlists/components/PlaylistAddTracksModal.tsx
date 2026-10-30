@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import type { TrackRow } from '@shared/types'
 import { artworkUrl, formatDuration } from '@renderer/lib/format'
 import { Icon } from '@renderer/components/ui/Icon'
+import { ModalHeader } from '@renderer/components/ui/ModalHeader'
+import '@renderer/components/ui/ModalChrome.css'
 import './PlaylistAddTracksModal.css'
 
 type PlaylistAddTracksModalProps = {
@@ -94,15 +96,14 @@ export function PlaylistAddTracksModal({
         aria-labelledby="playlist-add-title"
         onClick={(event) => event.stopPropagation()}
       >
-        <header className="playlist-add__head">
-          <div>
-            <h2 id="playlist-add-title">Add songs</h2>
-            <p className="playlist-add__sub">to {playlistName}</p>
-          </div>
-          <button type="button" className="playlist-add__close" aria-label="Close" onClick={onClose}>
-            <Icon name="close" size={16} />
-          </button>
-        </header>
+        <ModalHeader
+          title="Add songs"
+          titleId="playlist-add-title"
+          subtitle={`to ${playlistName}`}
+          seed={31}
+          onClose={onClose}
+          closeDisabled={saving}
+        />
 
         <div className="playlist-add__search">
           <Icon name="browse" size={16} />
@@ -159,7 +160,7 @@ export function PlaylistAddTracksModal({
           </span>
           <button
             type="button"
-            className="playlist-add__save"
+            className="ug-modal__btn ug-modal__btn--solid"
             disabled={saving || selected.size === 0}
             onClick={() => {
               void (async () => {

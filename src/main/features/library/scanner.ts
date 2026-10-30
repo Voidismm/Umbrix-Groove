@@ -16,6 +16,16 @@ type ExistingTrack = {
   mtime_ms: number | null
   file_size: number | null
   content_hash: string | null
+  user_meta_locked: number
+  title: string
+  album_id: string | null
+  artist_id: string | null
+  album_artist: string | null
+  track_number: number | null
+  disc_number: number | null
+  year: number | null
+  genre: string | null
+  artwork_path: string | null
 }
 
 function normalizePath(p: string): string {
@@ -177,7 +187,12 @@ export async function scanFolder(
   emit({ phase: 'parsing', processed: 0, total: files.length, message: `Found ${files.length} audio files` })
 
   const existingRows = db
-    .prepare('SELECT id, path, mtime_ms, file_size, content_hash FROM tracks WHERE folder_id = ?')
+    .prepare(
+      `SELECT id, path, mtime_ms, file_size, content_hash, user_meta_locked,
+              title, album_id, artist_id, album_artist, track_number, disc_number,
+              year, genre, artwork_path
+       FROM tracks WHERE folder_id = ?`
+    )
     .all(folderId) as ExistingTrack[]
   const existingByPath = new Map(existingRows.map((row) => [row.path.toLowerCase(), row]))
   const seenPaths = new Set<string>()
@@ -249,17 +264,6 @@ export async function scanFolder(
       const common = metadata?.common
       const format = metadata?.format
 
-      const artistName =
-        firstString(common?.artist) ||
-        firstString(common?.albumartist) ||
-        'Unknown Artist'
-      const albumArtist = firstString(common?.albumartist)
-      const albumTitle = firstString(common?.album) || 'Unknown Album'
-      const title = firstString(common?.title) || titleFromFilename(filePath)
-      const year = common?.year ?? null
-      const genre = firstString(common?.genre)
-      const trackNumber = common?.track?.no ?? null
-      const discNumber = common?.disk?.no ?? null
       const durationMs =
         format?.duration != null && Number.isFinite(format.duration)
           ? Math.round(format.duration * 1000)
@@ -268,20 +272,56 @@ export async function scanFolder(
       const sampleRate = format?.sampleRate ?? null
       const codec = format?.codec || extname(filePath).replace('.', '').toUpperCase() || null
 
-      const artistId = getOrCreateArtist(artistName)
-      const albumArtistId = getOrCreateArtist(albumArtist || artistName)
-      const albumId = getOrCreateAlbum(albumTitle, albumArtistId, year)
-
+      const locked = previous?.user_meta_locked === 1
+      let title: string
+      let artistId: string
+      let albumId: string
+      let albumArtist: string | null
+      let year: number | null
+      let genre: string | null
+      let trackNumber: number | null
+      let discNumber: number | null
       let artworkPath: string | null = null
-      const picture = common?.picture?.[0]
-      if (picture?.data) {
-        try {
-          artworkPath = saveArtwork(Buffer.from(picture.data), picture.format)
-          db.prepare(
-            'UPDATE albums SET artwork_path = COALESCE(artwork_path, ?) WHERE id = ?'
-          ).run(artworkPath, albumId)
-        } catch (error) {
-          errors.push(`Artwork failed for ${filePath}: ${String(error)}`)
+
+      if (locked && previous) {
+        title = previous.title
+        artistId = previous.artist_id ?? getOrCreateArtist('Unknown Artist')
+        albumId =
+          previous.album_id ??
+          getOrCreateAlbum('Unknown Album', artistId, previous.year)
+        albumArtist = previous.album_artist
+        year = previous.year
+        genre = previous.genre
+        trackNumber = previous.track_number
+        discNumber = previous.disc_number
+        artworkPath = previous.artwork_path
+      } else {
+        const artistName =
+          firstString(common?.artist) ||
+          firstString(common?.albumartist) ||
+          'Unknown Artist'
+        albumArtist = firstString(common?.albumartist)
+        const albumTitle = firstString(common?.album) || 'Unknown Album'
+        title = firstString(common?.title) || titleFromFilename(filePath)
+        year = common?.year ?? null
+        genre = firstString(common?.genre)
+        trackNumber = common?.track?.no ?? null
+        discNumber = common?.disk?.no ?? null
+
+        artistId = getOrCreateArtist(artistName)
+        const albumArtistId = getOrCreateArtist(albumArtist || artistName)
+        albumId = getOrCreateAlbum(albumTitle, albumArtistId, year)
+
+        const picture = common?.picture?.[0]
+        if (picture?.data) {
+          try {
+            artworkPath = saveArtwork(Buffer.from(picture.data), picture.format)
+            db.prepare(
+              'UPDATE albums SET artwork_path = COALESCE(artwork_path, ?) WHERE id = ?'
+            ).run(artworkPath, albumId)
+          } catch (error) {
+            errors.push(`Artwork failed for ${filePath}: ${String(error)}`)
+          }
         }
       }
 

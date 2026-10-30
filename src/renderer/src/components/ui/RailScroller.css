@@ -1,0 +1,93 @@
+.rail-scroller {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.rail-scroller__frame {
+  position: relative;
+  min-width: 0;
+}
+
+.rail-scroller__row {
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.rail-scroller__row::-webkit-scrollbar {
+  display: none;
+  height: 0;
+}
+
+/* Stop native image-drag from eating the grab-to-slide gesture. */
+.rail-scroller__row img,
+.rail-scroller__row svg {
+  -webkit-user-drag: none;
+  user-drag: none;
+  pointer-events: none;
+}
+
+.rail-scroller__row.is-dragging {
+  cursor: grabbing;
+  scroll-behavior: auto;
+}
+
+.rail-scroller__row.is-dragging a,
+.rail-scroller__row.is-dragging button {
+  cursor: grabbing;
+}
+
+.rail-scroller:not(.is-overflowing) .rail-scroller__row {
+  cursor: default;
+}
+
+.rail-scroller__arrow {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: auto;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: rgba(6, 3, 12, 0.72);
+  color: var(--ug-gold-bright);
+  box-shadow: none;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity var(--ug-duration) var(--ug-ease),
+    background var(--ug-duration) var(--ug-ease),
+    color var(--ug-duration) var(--ug-ease);
+}
+
+.rail-scroller.is-overflowing:hover .rail-scroller__arrow:not(:disabled),
+.rail-scroller.is-overflowing:focus-within .rail-scroller__arrow:not(:disabled) {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.rail-scroller__arrow:disabled {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.rail-scroller__arrow:hover:not(:disabled) {
+  color: #fff8e8;
+  background: rgba(6, 3, 12, 0.88);
+}
+
+.rail-scroller__arrow--prev {
+  left: 0;
+}
+
+.rail-scroller__arrow--next {
+  right: 0;
+}

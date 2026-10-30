@@ -16,6 +16,7 @@ import type {
   RelatedTracksResult,
   ScanProgress,
   ScanResult,
+  TrackMetadataPatch,
   TrackQuery,
   TrackQueryResult,
   TrackRow
@@ -45,6 +46,8 @@ export interface UmbrixLibraryApi {
   recordPlay: (trackId: string) => Promise<{ ok: boolean; playCount: number }>
   getHomePersonalization: () => Promise<HomePersonalization>
   getDailyMixes: (forceRefresh?: boolean) => Promise<LocalMix[]>
+  getTrackLyricsOverride: (trackId: string) => Promise<string | null>
+  updateTrackMetadata: (trackId: string, patch: TrackMetadataPatch) => Promise<TrackRow>
   onScanProgress: (callback: (progress: ScanProgress) => void) => () => void
 }
 

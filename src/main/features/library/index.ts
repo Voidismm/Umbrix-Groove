@@ -33,6 +33,7 @@ export {
   queryTracks,
   removeFolder
 } from './queries'
+export { getTrackLyricsOverride, updateTrackMetadata } from './updateMetadata'
 export { getArtistSpotlight, getRelatedTracks } from './related'
 export {
   getDailyMixes,

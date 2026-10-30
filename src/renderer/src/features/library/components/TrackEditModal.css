@@ -1,0 +1,127 @@
+/* Extends playlist-edit chrome with track-specific field layout. */
+
+.track-edit .playlist-edit__panel {
+  width: min(780px, 100%);
+  max-height: min(78vh, 640px);
+}
+
+.track-edit .playlist-edit__body {
+  grid-template-columns: 160px minmax(0, 1fr);
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.track-edit .playlist-edit__foot {
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+  background: linear-gradient(180deg, rgba(18, 12, 28, 0.92), rgba(13, 9, 20, 0.98));
+  border-top: 1px solid rgba(201, 164, 92, 0.14);
+}
+
+.track-edit .playlist-edit__cover {
+  width: 160px;
+  height: 160px;
+}
+
+.track-edit__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.track-edit__grid .playlist-edit__field--span {
+  grid-column: 1 / -1;
+}
+
+.track-edit__label {
+  display: block;
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ug-text-soft);
+}
+
+.track-edit__hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ug-text-faint);
+}
+
+.track-edit__error {
+  margin: 0 20px 12px;
+  font-size: 13px;
+  color: #f0a0a8;
+}
+
+.track-edit__lyrics {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.track-edit .track-edit__lyrics-paste {
+  min-height: 72px;
+  max-height: 120px;
+  resize: vertical;
+  line-height: 1.45;
+  font-family: ui-monospace, 'Cascadia Code', 'Segoe UI Mono', Consolas, monospace;
+  font-size: 12.5px;
+  white-space: pre;
+  overflow: auto;
+}
+
+.track-edit__lyrics-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+}
+
+.track-edit__lyrics-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.track-edit__lyrics-pick {
+  width: fit-content;
+}
+
+.track-edit__lyrics-status {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ug-text-soft);
+}
+
+.track-edit__lyrics-link {
+  width: fit-content;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ug-gold, #c9a45c);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.track-edit__lyrics-link:hover {
+  color: var(--ug-gold-bright, #e8c878);
+}
+
+@media (max-width: 640px) {
+  .track-edit .playlist-edit__body {
+    grid-template-columns: 1fr;
+  }
+
+  .track-edit .playlist-edit__cover {
+    width: 140px;
+    height: 140px;
+    margin-inline: auto;
+  }
+
+  .track-edit__grid {
+    grid-template-columns: 1fr;
+  }
+}

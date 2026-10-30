@@ -1,4 +1,4 @@
-.playlist-ctx {
+﻿.playlist-ctx {
   position: fixed;
   z-index: 120;
   min-width: 196px;
@@ -17,7 +17,7 @@
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: rgba(242, 235, 255, 0.92);
+  color: rgba(210, 198, 228, 0.88);
   font: inherit;
   font-size: 13px;
   text-align: left;
@@ -26,7 +26,7 @@
 
 .playlist-ctx__item:hover:not(:disabled) {
   background: rgba(123, 77, 184, 0.28);
-  color: #fff;
+  color: #d4c8e6;
 }
 
 .playlist-ctx__item.is-danger {

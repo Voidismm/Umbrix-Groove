@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from 'fs'
 import { basename, dirname, extname, join } from 'path'
 import { parseFile } from 'music-metadata'
 import type { LyricsLine, LyricsPayload, LyricsSource } from '../../../shared/types'
+import { getTrackLyricsOverride } from '../library/updateMetadata'
 import { getTrackMediaById } from '../library/queries'
 import {
   cleanLyricText,
@@ -140,13 +141,37 @@ function payloadFromEmbedded(
   }
 }
 
-/** Resolve lyrics for a library track: sidecar files and/or embedded tags. */
+function payloadFromOverride(trackId: string, text: string): LyricsPayload {
+  if (looksLikeTimedLyrics(text)) {
+    const lines = parseLrc(text)
+    const synced = lines.some((line) => line.timeMs != null)
+    return {
+      trackId,
+      source: 'override',
+      synced,
+      lines,
+      rawText: text
+    }
+  }
+  return {
+    trackId,
+    source: 'override',
+    synced: false,
+    lines: plainTextToLines(text),
+    rawText: text
+  }
+}
+
+/** Resolve lyrics for a library track: in-app override, then sidecar / embedded. */
 export async function getLyricsForTrack(
   trackId: string,
   options?: LyricsLookupOptions
 ): Promise<LyricsPayload> {
   const media = getTrackMediaById(trackId)
   if (!media) return emptyPayload(trackId)
+
+  const override = getTrackLyricsOverride(trackId)
+  if (override?.trim()) return payloadFromOverride(trackId, override)
 
   const preferSidecar = options?.preferSidecar !== false
 

@@ -3,16 +3,21 @@ import type { ArtistSpotlight, RelatedTracksResult, TrackRow } from '@shared/typ
 import { LyricsPanel } from '@renderer/features/lyrics'
 import { useLibrary } from '@renderer/features/library'
 import { usePlaylists } from '@renderer/features/playlists/hooks/usePlaylists'
-import { usePlayback } from '@renderer/features/player'
+import { QueuePanel, usePlayback } from '@renderer/features/player'
+import { useSettings } from '@renderer/features/settings'
 import { artworkUrl } from '@renderer/lib/format'
+import { CandyScroll } from '../ui/CandyScroll'
+import { GalaxySky } from '../ui/GalaxySky'
 import { Icon } from '../ui/Icon'
 import './RightSidebar.css'
 
-export type RightTabId = 'lyrics' | 'about' | 'related'
+export type RightTabId = 'lyrics' | 'about' | 'related' | 'queue'
 
 type RightSidebarProps = {
   tab: RightTabId
   onTabChange: (tab: RightTabId) => void
+  /** Leave queue mode and restore the previous right-rail tab. */
+  onLeaveQueue?: () => void
   /** Bumps when the footer title asks to spotlight this panel. */
   revealTick?: number
 }
@@ -65,13 +70,16 @@ function RelatedList({
 export function RightSidebar({
   tab,
   onTabChange,
+  onLeaveQueue,
   revealTick = 0
 }: RightSidebarProps): React.JSX.Element {
   const { currentTrack, focusedTrack, playNext, addToQueue, playTrack } = usePlayback()
   const { selectAlbum, selectArtist, setActiveNav } = useLibrary()
   const { toggleLiked, isLiked } = usePlaylists()
+  const { settings } = useSettings()
   const track = focusedTrack ?? currentTrack
   const liked = track ? isLiked(track.id) : false
+  const galaxyChrome = settings.appearance.galaxyChrome !== false
 
   const [related, setRelated] = useState<RelatedTracksResult | null>(null)
   const [spotlight, setSpotlight] = useState<ArtistSpotlight | null>(null)
@@ -116,11 +124,31 @@ export function RightSidebar({
     setActiveNav('albums')
   }
 
+  if (tab === 'queue') {
+    return (
+      <aside
+        className={`right-sidebar gold-frame right-sidebar--queue${lit ? ' is-lit' : ''}`}
+        aria-label="Play queue"
+      >
+        {galaxyChrome ? <GalaxySky variant="chrome" seed={73} /> : null}
+        <CandyScroll className="right-sidebar__queue-scroll" label="Scroll queue">
+          <QueuePanel
+            embedded
+            onClose={() => {
+              onLeaveQueue?.()
+            }}
+          />
+        </CandyScroll>
+      </aside>
+    )
+  }
+
   return (
     <aside
       className={`right-sidebar gold-frame${lit ? ' is-lit' : ''}`}
       aria-label="Now playing"
     >
+      {galaxyChrome ? <GalaxySky variant="chrome" seed={73} /> : null}
       <div className="right-sidebar__art gold-frame">
         <div className="right-sidebar__art-inner" aria-hidden>
           {track && artworkUrl(track.artworkKey) ? (
@@ -149,14 +177,14 @@ export function RightSidebar({
         </div>
         <button
           type="button"
-          className={`right-sidebar__icon${liked ? ' is-liked' : ''}`}
+          className={`right-sidebar__icon ug-candy-heart${liked ? ' is-liked' : ''}`}
           aria-label={liked ? 'Unlove' : 'Love'}
           disabled={!track}
           onClick={() => {
             if (track) void toggleLiked(track.id)
           }}
         >
-          <Icon name={liked ? 'heart-filled' : 'heart'} />
+          <Icon name="heart" size={22} />
         </button>
       </div>
 
@@ -181,7 +209,7 @@ export function RightSidebar({
         ))}
       </div>
 
-      <div className="right-sidebar__body" role="tabpanel">
+      <CandyScroll className="right-sidebar__body" label="Scroll details" role="tabpanel">
         {/* Remount lyrics when leaving this tab so sync work stops and play is required again. */}
         {tab === 'lyrics' ? (
           <div className="lyrics-rail" key="lyrics-rail">
@@ -297,7 +325,7 @@ export function RightSidebar({
             )}
           </div>
         )}
-      </div>
+      </CandyScroll>
     </aside>
   )
 }

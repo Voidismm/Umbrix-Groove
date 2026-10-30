@@ -12,13 +12,23 @@
 }
 
 .playlist-tracks__head {
-  padding: 0 16px 8px;
+  padding: 0 16px 10px;
   margin: 0 8px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  color: var(--ug-text-faint);
-  font-size: 12px;
-  letter-spacing: 0.04em;
+  color: var(--ug-text-muted);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
   text-transform: none;
+}
+
+/* Sit # over the centered index inside the 40px play/number control */
+.playlist-tracks__head > span:first-child {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  justify-self: start;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Nudge Album label + values left toward the Title column */
@@ -41,6 +51,8 @@
   grid-column: 2;
   justify-self: center;
   align-self: center;
+  width: 18px;
+  height: 18px;
 }
 
 .playlist-tracks__row .track-table__end {
@@ -187,9 +199,24 @@
   line-height: 0;
 }
 
+.playlist-tracks__like {
+  --ug-candy-heart-size: 20px;
+  position: relative;
+  overflow: visible;
+}
+
 .playlist-tracks__like .ug-icon {
   width: 20px !important;
   height: 20px !important;
+}
+
+/* Empty like: plain icon only — no masked candy layers on every row. */
+.playlist-tracks__like:not(.ug-candy-heart) {
+  color: var(--ug-text-faint);
+}
+
+.playlist-tracks__like:not(.ug-candy-heart):hover {
+  color: var(--ug-text);
 }
 
 .playlist-tracks__row:hover .playlist-tracks__like,
@@ -202,18 +229,9 @@
   color: var(--ug-text);
 }
 
-.playlist-tracks__like.is-liked {
-  color: var(--ug-amethyst-bright);
-  background: transparent;
-}
-
-.playlist-tracks__like:hover {
-  color: var(--ug-text);
-  background: transparent;
-}
-
+.playlist-tracks__like:hover,
+.playlist-tracks__like.is-liked,
 .playlist-tracks__like.is-liked:hover {
-  color: var(--ug-amethyst);
   background: transparent;
 }
 

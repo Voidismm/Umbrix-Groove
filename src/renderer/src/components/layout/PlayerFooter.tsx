@@ -1,9 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
-import { useLibrary } from '@renderer/features/library'
-import { usePlayback } from '@renderer/features/player'
+import type { TrackRow } from '@shared/types'
+import { TrackEditModal, useLibrary } from '@renderer/features/library'
+import { usePlayback, usePlaybackClock, usePlaybackVolume } from '@renderer/features/player'
 import { TrackContextMenu } from '@renderer/features/playlists'
 import { usePlaylists } from '@renderer/features/playlists/hooks/usePlaylists'
+import { useSettings } from '@renderer/features/settings'
 import { artworkUrl, formatClock, formatDuration } from '@renderer/lib/format'
+import { openSettings } from '@renderer/lib/settingsNav'
+import { ConfirmDialog } from '../ui/ConfirmDialog'
+import { GalaxySky } from '../ui/GalaxySky'
 import { Icon } from '../ui/Icon'
 import './PlayerFooter.css'
 
@@ -14,24 +19,27 @@ type PlayerFooterProps = {
   onOpenRightLyrics?: () => void
   /** Open the right rail on About for the now-playing track. */
   onOpenNowPlaying?: () => void
+  /** Queue is currently taking over the right sidebar. */
+  queueActive?: boolean
+  /** Toggle queue takeover on the right sidebar. */
+  onToggleQueue?: () => void
 }
 
 export function PlayerFooter({
   onOpenRightLyrics,
-  onOpenNowPlaying
+  onOpenNowPlaying,
+  queueActive = false,
+  onToggleQueue
 }: PlayerFooterProps): React.JSX.Element {
-  const { activeNav, setActiveNav } = useLibrary()
+  const { activeNav, setActiveNav, refresh: refreshLibrary } = useLibrary()
+  const { settings, setWarnings } = useSettings()
   const {
     currentTrack,
     isPlaying,
-    currentTime,
     duration,
-    volume,
-    muted,
     shuffle,
     repeat,
     error,
-    queueOpen,
     setQueueOpen,
     visualizerOpen,
     setVisualizerOpen,
@@ -39,18 +47,44 @@ export function PlayerFooter({
     next,
     previous,
     seek,
-    setVolume,
-    toggleMute,
     toggleShuffle,
     cycleRepeat,
     playNext,
     addToQueue,
-    focusTrack
+    focusTrack,
+    syncTrackRow
   } = usePlayback()
-  const { playlists, askCreatePlaylistWithTracks, addTracks, toggleLiked, isLiked } = usePlaylists()
+  const currentTime = usePlaybackClock()
+  const [vizWarnOpen, setVizWarnOpen] = useState(false)
+  const [vizWarnDontShow, setVizWarnDontShow] = useState(false)
+  /** After Continue once this session, skip the nag until restart (permanent opt-out is separate). */
+  const vizWarnSessionAckRef = useRef(false)
+
+  const requestVisualizerToggle = (): void => {
+    if (visualizerOpen) {
+      setVisualizerOpen(false)
+      return
+    }
+    if (settings.warnings.showVisualizerPhotosensitivity && !vizWarnSessionAckRef.current) {
+      setVizWarnDontShow(false)
+      setVizWarnOpen(true)
+      return
+    }
+    setVisualizerOpen(true)
+  }
+  const { volume, muted, setVolume, toggleMute } = usePlaybackVolume()
+  const {
+    playlists,
+    askCreatePlaylistWithTracks,
+    addTracks,
+    toggleLiked,
+    isLiked,
+    refresh: refreshPlaylists
+  } = usePlaylists()
   const [scrubbing, setScrubbing] = useState(false)
   const [scrubTime, setScrubTime] = useState(0)
   const [trackMenu, setTrackMenu] = useState<TrackMenuState | null>(null)
+  const [editTrack, setEditTrack] = useState<TrackRow | null>(null)
   const scrubbingRef = useRef(false)
   const scrubTimeRef = useRef(0)
   const volumeWrapRef = useRef<HTMLDivElement>(null)
@@ -154,47 +188,60 @@ export function PlayerFooter({
   }
 
   return (
+    <>
     <footer className="player-footer gold-frame" aria-label="Playback controls">
+      {settings.appearance.galaxyChrome !== false ? (
+        <GalaxySky variant="chrome" seed={29} />
+      ) : null}
       <div className="player-footer__now">
-        <div className="player-footer__thumb" aria-hidden>
-          {art ? <img src={art} alt="" /> : <Icon name="moon" />}
-        </div>
-        <div className="player-footer__meta">
-          <div className="player-footer__text">
-            {hasTrack && track ? (
-              <button
-                type="button"
-                className="player-footer__title"
-                title={`${track.title} — show in sidebar`}
-                onClick={() => {
-                  focusTrack(track)
-                  onOpenNowPlaying?.()
-                }}
-                onContextMenu={(event) => {
-                  event.preventDefault()
-                  setTrackMenu({ x: event.clientX, y: event.clientY })
-                }}
-              >
-                {track.title}
-              </button>
-            ) : (
-              <strong>No track playing</strong>
-            )}
-            <span>{track?.artistName ?? 'Pick a song from your library'}</span>
-            {error ? <em className="player-footer__error">{error}</em> : null}
-          </div>
-          {hasTrack && track ? (
+        {hasTrack && track ? (
+          <div className="player-footer__track-row">
             <button
               type="button"
-              className={`player-footer__love${liked ? ' is-liked' : ''}`}
+              className="player-footer__now-card"
+              data-groove-tip="Open now playing"
+              onClick={() => {
+                focusTrack(track)
+                onOpenNowPlaying?.()
+              }}
+              onContextMenu={(event) => {
+                event.preventDefault()
+                setTrackMenu({ x: event.clientX, y: event.clientY })
+              }}
+            >
+              <span className="player-footer__thumb" aria-hidden>
+                {art ? <img src={art} alt="" /> : <Icon name="moon" />}
+              </span>
+              <span className="player-footer__text">
+                <span className="player-footer__title">{track.title}</span>
+                <span className="player-footer__artist">{track.artistName}</span>
+                {error ? <em className="player-footer__error">{error}</em> : null}
+              </span>
+            </button>
+            <button
+              type="button"
+              className={`player-footer__love ug-candy-heart${liked ? ' is-liked' : ''}`}
               aria-label={liked ? 'Remove from Loved Songs' : 'Add to Loved Songs'}
-              title={liked ? 'Unlove' : 'Love'}
+              data-groove-tip={liked ? 'Remove from Loved' : 'Mark as loved'}
               onClick={() => void toggleLiked(track.id)}
             >
-              <Icon name={liked ? 'heart-filled' : 'heart'} size={20} />
+              <Icon name="heart" size={24} />
             </button>
-          ) : null}
-        </div>
+          </div>
+        ) : (
+          <div className="player-footer__track-row">
+            <div className="player-footer__now-card is-empty">
+              <span className="player-footer__thumb" aria-hidden>
+                <Icon name="moon" />
+              </span>
+              <span className="player-footer__text">
+                <strong>No track playing</strong>
+                <span className="player-footer__artist">Pick a song from your library</span>
+                {error ? <em className="player-footer__error">{error}</em> : null}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       {trackMenu && track ? (
@@ -214,6 +261,20 @@ export function PlayerFooter({
           }}
           onPlayNext={() => playNext(track)}
           onAddToQueue={() => addToQueue(track)}
+          onEditMetadata={() => setEditTrack(track)}
+        />
+      ) : null}
+
+      {editTrack ? (
+        <TrackEditModal
+          open
+          track={editTrack}
+          onClose={() => setEditTrack(null)}
+          onSaved={(updated) => {
+            syncTrackRow(updated)
+            void refreshLibrary()
+            void refreshPlaylists()
+          }}
         />
       ) : null}
 
@@ -224,17 +285,27 @@ export function PlayerFooter({
             aria-label="Shuffle"
             aria-pressed={shuffle}
             className={shuffle ? 'is-active' : undefined}
+            data-groove-tip={
+              shuffle ? 'Shuffle is on' : 'Shuffle the order of songs'
+            }
             onClick={toggleShuffle}
           >
             <Icon name="shuffle" />
           </button>
-          <button type="button" aria-label="Previous" onClick={previous} disabled={!hasTrack}>
+          <button
+            type="button"
+            aria-label="Previous"
+            data-groove-tip="Back one track"
+            onClick={previous}
+            disabled={!hasTrack}
+          >
             <Icon name="prev" />
           </button>
           <button
             type="button"
             className="player-footer__play"
             aria-label={isPlaying ? 'Pause' : 'Play'}
+            data-groove-tip={isPlaying ? 'Pause the music' : 'Hit play'}
             onClick={togglePlay}
             disabled={!hasTrack}
           >
@@ -244,7 +315,13 @@ export function PlayerFooter({
               className={isPlaying ? undefined : 'player-footer__play-icon'}
             />
           </button>
-          <button type="button" aria-label="Next" onClick={next} disabled={!hasTrack}>
+          <button
+            type="button"
+            aria-label="Next"
+            data-groove-tip="Skip ahead"
+            onClick={next}
+            disabled={!hasTrack}
+          >
             <Icon name="next" />
           </button>
           <button
@@ -252,8 +329,14 @@ export function PlayerFooter({
             aria-label={`Repeat ${repeat}`}
             aria-pressed={repeat !== 'off'}
             className={repeat !== 'off' ? 'is-active' : undefined}
+            data-groove-tip={
+              repeat === 'off'
+                ? 'Repeat off'
+                : repeat === 'all'
+                  ? 'Loop the whole queue'
+                  : 'Loop this track'
+            }
             onClick={cycleRepeat}
-            title={repeat === 'off' ? 'Repeat off' : repeat === 'all' ? 'Repeat all' : 'Repeat one'}
           >
             <Icon name={repeat === 'one' ? 'repeat-one' : 'repeat'} />
           </button>
@@ -292,12 +375,14 @@ export function PlayerFooter({
               className={`player-footer__icon${muted || volume <= 0.001 ? ' is-muted' : ''}`}
               aria-label={muted || volume <= 0.001 ? 'Unmute' : 'Mute'}
               aria-pressed={muted || volume <= 0.001}
+              data-groove-tip={muted || volume <= 0.001 ? 'Bring the sound back' : 'Mute the volume'}
               onClick={toggleMute}
             >
               <Icon name={volumeIcon} size={18} />
             </button>
             <input
               type="range"
+              className="ug-slider"
               min={0}
               max={1}
               step={0.005}
@@ -318,6 +403,7 @@ export function PlayerFooter({
             className={`player-footer__icon${lyricsStageOpen ? ' is-active' : ''}`}
             aria-label={lyricsStageOpen ? 'Close lyrics view' : 'Open lyrics in main view'}
             aria-pressed={lyricsStageOpen}
+            data-groove-tip={lyricsStageOpen ? 'Hide the lyric stage' : 'Pull up the lyrics'}
             onClick={toggleLyricsStage}
           >
             <Icon name="lyrics" />
@@ -327,25 +413,86 @@ export function PlayerFooter({
             className={`player-footer__icon${visualizerOpen ? ' is-active' : ''}`}
             aria-label={visualizerOpen ? 'Close visualizer' : 'Open music visualizer'}
             aria-pressed={visualizerOpen}
-            title="Visualizer"
-            onClick={() => setVisualizerOpen(!visualizerOpen)}
+            data-groove-tip={visualizerOpen ? 'Turn off the visualizer' : 'Turn on the visualizer'}
+            onClick={requestVisualizerToggle}
           >
             <Icon name="visualizer" />
           </button>
           <button
             type="button"
-            className={`player-footer__icon${queueOpen ? ' is-active' : ''}`}
-            aria-label="Queue"
-            aria-pressed={queueOpen}
-            onClick={() => setQueueOpen(!queueOpen)}
+            className={`player-footer__icon${queueActive ? ' is-active' : ''}`}
+            aria-label={queueActive ? 'Close queue' : 'Open queue'}
+            aria-pressed={queueActive}
+            data-groove-tip={queueActive ? 'Close the queue' : 'Open the queue'}
+            onClick={() => {
+              const nextOpen = !queueActive
+              setQueueOpen(nextOpen)
+              onToggleQueue?.()
+            }}
           >
             <Icon name="queue" />
           </button>
-          <button type="button" className="player-footer__icon" aria-label="Mini player" disabled>
+          <button
+            type="button"
+            className="player-footer__icon"
+            aria-label="Mini player"
+            data-groove-tip="Mini player — coming soon"
+            disabled
+          >
             <Icon name="mini" />
           </button>
         </div>
       </div>
     </footer>
+
+    <ConfirmDialog
+      open={vizWarnOpen}
+      title="Photosensitivity warning"
+      message={
+        'Some visualizations use bright flashes, strobing, and rapid color changes.\n\n' +
+        'If you have photosensitive epilepsy or are sensitive to flashing lights, skip the visualizer or choose calmer presets.\n\n' +
+        'The visualizer does not start until you continue.'
+      }
+      confirmLabel="Continue"
+      cancelLabel="Cancel"
+      danger={false}
+      onCancel={() => setVizWarnOpen(false)}
+      onConfirm={() => {
+        vizWarnSessionAckRef.current = true
+        if (vizWarnDontShow) {
+          setWarnings({ showVisualizerPhotosensitivity: false })
+        }
+        setVizWarnOpen(false)
+        setVisualizerOpen(true)
+      }}
+      extra={
+        <>
+          <div className="confirm-dialog__toggle-row">
+            <span id="viz-warn-dont-show-label">Do not show this warning again</span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={vizWarnDontShow}
+              aria-labelledby="viz-warn-dont-show-label"
+              className={`confirm-dialog__switch${vizWarnDontShow ? ' is-on' : ''}`}
+              onClick={() => setVizWarnDontShow((value) => !value)}
+            >
+              <span className="confirm-dialog__switch-thumb" />
+            </button>
+          </div>
+          <button
+            type="button"
+            className="confirm-dialog__link"
+            onClick={() => {
+              setVizWarnOpen(false)
+              openSettings({ focus: 'warnings' })
+            }}
+          >
+            Open Warning Toggles in Settings
+          </button>
+        </>
+      }
+    />
+    </>
   )
 }

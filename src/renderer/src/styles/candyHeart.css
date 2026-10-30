@@ -1,0 +1,121 @@
+/**
+ * Shared candy heart — grey empty / gold border when liked.
+ * Avoid CSS filters (expensive in Electron during shell resize).
+ * Host needs position: relative. Size via --ug-candy-heart-size.
+ */
+.ug-candy-heart {
+  --ug-candy-heart-size: 24px;
+  position: relative;
+  color: transparent;
+  overflow: visible;
+}
+
+.ug-candy-heart > .ug-icon,
+.ug-candy-heart > svg {
+  position: relative;
+  z-index: 1;
+  opacity: 0;
+}
+
+/* Gold (or grey) heart border under the fill */
+.ug-candy-heart::after {
+  content: '';
+  position: absolute;
+  width: var(--ug-candy-heart-size);
+  height: var(--ug-candy-heart-size);
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(170, 160, 185, 0.8);
+  -webkit-mask: url('../assets/icons/heart-filled.svg') center / contain no-repeat;
+  mask: url('../assets/icons/heart-filled.svg') center / contain no-repeat;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Empty: solid masked fill (no PNG, no filter). Liked swaps to candy PNG. */
+.ug-candy-heart::before {
+  content: '';
+  position: absolute;
+  width: var(--ug-candy-heart-size);
+  height: var(--ug-candy-heart-size);
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) scale(0.88);
+  transform-origin: center;
+  background: rgba(132, 122, 150, 0.72);
+  -webkit-mask: url('../assets/icons/heart-filled.svg') center / contain no-repeat;
+  mask: url('../assets/icons/heart-filled.svg') center / contain no-repeat;
+  pointer-events: none;
+  z-index: 3;
+  opacity: 1;
+}
+
+.ug-candy-heart:hover:not(:disabled):not(.is-liked)::before {
+  background: rgba(150, 140, 168, 0.85);
+}
+
+.ug-candy-heart.is-liked::after {
+  background: var(--ug-gold, #c9a45c);
+}
+
+.ug-candy-heart.is-liked::before {
+  background: url('../assets/buttons/heart button.png') center / cover no-repeat;
+  opacity: 0.92;
+}
+
+.ug-candy-heart.is-liked:hover:not(:disabled)::after {
+  background: var(--ug-gold-bright, #e8c878);
+}
+
+.ug-candy-heart.is-liked:hover:not(:disabled)::before {
+  background: url('../assets/buttons/heart button.png') center / cover no-repeat;
+  opacity: 1;
+}
+
+/** Inline sized host (context menus, etc.). */
+.ug-candy-heart--mark {
+  display: inline-block;
+  width: var(--ug-candy-heart-size);
+  height: var(--ug-candy-heart-size);
+  flex-shrink: 0;
+  pointer-events: none;
+  vertical-align: middle;
+}
+
+/**
+ * Display-only Loved Songs art — always candy PNG, no filter.
+ */
+.ug-candy-heart--art {
+  display: block;
+  width: var(--ug-candy-heart-size);
+  height: var(--ug-candy-heart-size);
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.ug-candy-heart--art::after {
+  background: var(--ug-gold, #c9a45c);
+}
+
+.ug-candy-heart--art::before {
+  background: url('../assets/buttons/heart button.png') center / cover no-repeat;
+  opacity: 0.92;
+}
+
+.ug-candy-heart--art:hover::after {
+  background: var(--ug-gold, #c9a45c);
+}
+
+.ug-candy-heart--art:hover::before {
+  opacity: 0.92;
+}
+
+/** Full playlist cover — candy only, no gold rim. */
+.ug-candy-heart--art-plain::after {
+  display: none;
+}
+
+.ug-candy-heart--art-plain::before {
+  transform: translate(-50%, -50%) scale(1);
+}

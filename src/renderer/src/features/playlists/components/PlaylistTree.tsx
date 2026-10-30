@@ -37,6 +37,13 @@ type TreeDnD = {
   commitTrackDrop: (playlistId: string, trackId: string) => void
 }
 
+/** Playback actions owned by PlaylistTree — nodes must not call usePlayback(). */
+type TreePlayback = {
+  closeVisualizer: () => void
+  playPlaylist: (playlistId: string) => void
+  queuePlaylist: (playlistId: string) => void
+}
+
 function parseDrag(event: React.DragEvent): DragPayload | null {
   try {
     const raw = event.dataTransfer.getData('application/x-umbrix-playlist')
@@ -91,12 +98,14 @@ function TreeNodeView({
   node,
   depth,
   openMenu,
-  dnd
+  dnd,
+  playback
 }: {
   node: PlaylistTreeNode
   depth: number
   openMenu: (event: React.MouseEvent, items: PlaylistMenuItem[]) => void
   dnd: TreeDnD
+  playback: TreePlayback
 }): React.JSX.Element {
   const {
     selectedPlaylistId,
@@ -113,7 +122,16 @@ function TreeNodeView({
     tree,
     playlists
   } = usePlaylists()
-  const { playTrack, addTracksToQueue } = usePlayback()
+
+  const openPlaylist = (id: string): void => {
+    playback.closeVisualizer()
+    selectPlaylist(id)
+  }
+
+  const openPlaylistDetails = (id: string): void => {
+    playback.closeVisualizer()
+    openPlaylistEditor(id)
+  }
   const [open, setOpen] = useState(true)
   const isFolder = node.type === 'folder'
   const active = !isFolder && selectedPlaylistId === node.id
@@ -223,36 +241,26 @@ function TreeNodeView({
         kind: 'item',
         id: 'play',
         label: 'Play',
-        onSelect: () => {
-          void (async () => {
-            const tracks = await window.api.playlists.getTracks(node.id)
-            if (tracks[0]) playTrack(tracks[0], tracks)
-          })()
-        }
+        onSelect: () => playback.playPlaylist(node.id)
       },
       {
         kind: 'item',
         id: 'queue',
         label: 'Add to queue',
-        onSelect: () => {
-          void (async () => {
-            const tracks = await window.api.playlists.getTracks(node.id)
-            addTracksToQueue(tracks)
-          })()
-        }
+        onSelect: () => playback.queuePlaylist(node.id)
       },
       { kind: 'separator', id: 'sep-1' },
       {
         kind: 'item',
         id: 'open',
         label: 'Open',
-        onSelect: () => selectPlaylist(node.id)
+        onSelect: () => openPlaylist(node.id)
       },
       {
         kind: 'item',
         id: 'edit',
         label: 'Edit details',
-        onSelect: () => openPlaylistEditor(node.id)
+        onSelect: () => openPlaylistDetails(node.id)
       },
       {
         kind: 'item',
@@ -398,7 +406,7 @@ function TreeNodeView({
           }`}
           onClick={() => {
             if (isFolder) setOpen((value) => !value)
-            else selectPlaylist(node.id)
+            else openPlaylist(node.id)
           }}
           onDoubleClick={() => {
             if (isFolder) askRenameFolder(node.id, displayName)
@@ -459,6 +467,7 @@ function TreeNodeView({
               depth={depth + 1}
               openMenu={openMenu}
               dnd={dnd}
+              playback={playback}
             />
           ))}
         </div>
@@ -475,6 +484,7 @@ type PlaylistTreeProps = {
 /** Nested playlist / folder tree with drag-and-drop reorder + track drop-in. */
 export function PlaylistTree({ compact = false }: PlaylistTreeProps): React.JSX.Element {
   const { tree, ready, createPlaylist, createFolder, placeTreeItem, addTracks } = usePlaylists()
+  const { playTrack, addTracksToQueue, setVisualizerOpen } = usePlayback()
   const [menu, setMenu] = useState<MenuState | null>(null)
   const [drag, setDrag] = useState<DragPayload | null>(null)
   const [drop, setDrop] = useState<DropTarget | null>(null)
@@ -483,6 +493,25 @@ export function PlaylistTree({ compact = false }: PlaylistTreeProps): React.JSX.
   const openMenu = useCallback((event: React.MouseEvent, items: PlaylistMenuItem[]): void => {
     setMenu({ x: event.clientX, y: event.clientY, items })
   }, [])
+
+  const playback = useMemo<TreePlayback>(
+    () => ({
+      closeVisualizer: () => setVisualizerOpen(false),
+      playPlaylist: (playlistId: string) => {
+        void (async () => {
+          const tracks = await window.api.playlists.getTracks(playlistId)
+          if (tracks[0]) playTrack(tracks[0], tracks)
+        })()
+      },
+      queuePlaylist: (playlistId: string) => {
+        void (async () => {
+          const tracks = await window.api.playlists.getTracks(playlistId)
+          addTracksToQueue(tracks)
+        })()
+      }
+    }),
+    [playTrack, addTracksToQueue, setVisualizerOpen]
+  )
 
   const commitDrop = useCallback(
     (target: DropTarget): void => {
@@ -623,6 +652,7 @@ export function PlaylistTree({ compact = false }: PlaylistTreeProps): React.JSX.
             depth={0}
             openMenu={openMenu}
             dnd={dnd}
+            playback={playback}
           />
         ))
       )}

@@ -1,0 +1,35 @@
+/* Floating host — avoids button overflow / ::after conflicts in the footer. */
+.groove-tip-host {
+  position: fixed;
+  z-index: 200;
+  left: 0;
+  top: 0;
+  max-width: min(280px, calc(100vw - 16px));
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(201, 164, 92, 0.45);
+  background: linear-gradient(180deg, #2a1f3d, #16101f);
+  color: var(--ug-gold-warm, #e0c27a);
+  font-family: var(--ug-font-display, Cinzel, serif);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  line-height: 1.3;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
+}
+
+html[data-reduce-motion='false'] .groove-tip-host {
+  animation: groove-tip-in 140ms ease;
+}
+
+@keyframes groove-tip-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

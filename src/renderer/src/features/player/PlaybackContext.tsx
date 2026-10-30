@@ -13,6 +13,7 @@ import type { RepeatMode, TrackRow } from '@shared/types'
 import { useSettings } from '@renderer/features/settings'
 import { artworkUrl, mediaUrl } from '@renderer/lib/format'
 import { clearSession, readSession, SESSION_KEYS, writeSession } from '@renderer/lib/session'
+import { resetPlaybackClock, setPlaybackClock } from './playbackClock'
 
 export type AnalyserFrame = {
   frequency: Uint8Array<ArrayBuffer>
@@ -29,16 +30,23 @@ type PlaybackContextValue = {
   focusTrack: (track: TrackRow | null) => void
   queue: TrackRow[]
   queueIndex: number
+  /**
+   * Manually queued tracks sitting right after now-playing
+   * (Add to queue / Play next). Shown under "Added to queue".
+   */
+  userQueueCount: number
   isPlaying: boolean
-  currentTime: number
+  /** Track duration in seconds (metadata). Progress time lives on usePlaybackClock(). */
   duration: number
-  volume: number
-  muted: boolean
   shuffle: boolean
   repeat: RepeatMode
   error: string | null
   queueOpen: boolean
   setQueueOpen: (open: boolean) => void
+  /** Bumps when tracks are added so the shell can reveal the queue rail. */
+  queueRevealTick: number
+  /** Short status like "Added to queue" for the panel header. */
+  queueNotice: string | null
   playTrack: (
     track: TrackRow,
     context?: TrackRow[],
@@ -49,16 +57,17 @@ type PlaybackContextValue = {
   next: () => void
   previous: () => void
   seek: (seconds: number) => void
-  setVolume: (value: number) => void
-  toggleMute: () => void
   toggleShuffle: () => void
   cycleRepeat: () => void
   playNext: (track: TrackRow) => void
-  addToQueue: (track: TrackRow) => void
+  /** Optional `atIndex` inserts inside the "Added to queue" block (clamped). */
+  addToQueue: (track: TrackRow, atIndex?: number) => void
   addTracksToQueue: (tracks: TrackRow[]) => void
   removeFromQueue: (index: number) => void
   clearQueue: () => void
   jumpToQueueIndex: (index: number) => void
+  /** Replace matching rows in queue / focused track after library metadata edits. */
+  syncTrackRow: (track: TrackRow) => void
   visualizerOpen: boolean
   setVisualizerOpen: (open: boolean) => void
   /** Wire HTMLAudioElement → Analyser → speakers (lazy; destination must stay linked). */
@@ -71,7 +80,16 @@ type PlaybackContextValue = {
   getVisualizerAudioGraph: () => { context: AudioContext; node: AudioNode } | null
 }
 
+/** Volume/mute live in a separate context so mute does not re-render the track table. */
+type PlaybackVolumeContextValue = {
+  volume: number
+  muted: boolean
+  setVolume: (value: number) => void
+  toggleMute: () => void
+}
+
 const PlaybackContext = createContext<PlaybackContextValue | null>(null)
+const PlaybackVolumeContext = createContext<PlaybackVolumeContextValue | null>(null)
 
 const STORAGE_KEY = 'umbrix.playback.prefs'
 
@@ -164,8 +182,8 @@ export function PlaybackProvider({ children }: { children: ReactNode }): React.J
 
   const [queue, setQueue] = useState<TrackRow[]>([])
   const [queueIndex, setQueueIndex] = useState(0)
+  const [userQueueCount, setUserQueueCount] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [volume, setVolumeState] = useState(prefs.current.volume)
   const [muted, setMuted] = useState(prefs.current.muted)
@@ -173,6 +191,8 @@ export function PlaybackProvider({ children }: { children: ReactNode }): React.J
   const [repeat, setRepeat] = useState<RepeatMode>(prefs.current.repeat)
   const [error, setError] = useState<string | null>(null)
   const [queueOpen, setQueueOpen] = useState(false)
+  const [queueRevealTick, setQueueRevealTick] = useState(0)
+  const [queueNotice, setQueueNotice] = useState<string | null>(null)
   const [visualizerOpen, setVisualizerOpen] = useState(false)
   const [focusedTrack, setFocusedTrack] = useState<TrackRow | null>(null)
   const lastAudibleVolume = useRef(
@@ -182,8 +202,10 @@ export function PlaybackProvider({ children }: { children: ReactNode }): React.J
   const playCreditedRef = useRef(false)
   const queueRef = useRef(queue)
   const queueIndexRef = useRef(queueIndex)
+  const userQueueCountRef = useRef(0)
   const currentTimeRef = useRef(0)
   const queueOpenRef = useRef(queueOpen)
+  const queueNoticeTimerRef = useRef<number | null>(null)
   /** Last ordered context used to build the queue — restores order when shuffle turns off. */
   const sourceOrderRef = useRef<TrackRow[]>([])
   /** True only after the first restore attempt finishes (success or empty). */
@@ -201,12 +223,42 @@ export function PlaybackProvider({ children }: { children: ReactNode }): React.J
   }, [queue, queueIndex])
 
   useEffect(() => {
-    currentTimeRef.current = currentTime
-  }, [currentTime])
+    userQueueCountRef.current = userQueueCount
+  }, [userQueueCount])
 
   useEffect(() => {
     queueOpenRef.current = queueOpen
   }, [queueOpen])
+
+  const publishClock = useCallback((time: number, force = false): void => {
+    const next = Number.isFinite(time) && time >= 0 ? time : 0
+    currentTimeRef.current = next
+    setPlaybackClock(next, force ? { force: true } : undefined)
+  }, [])
+
+  const flashQueueNotice = useCallback((message: string) => {
+    setQueueNotice(message)
+    if (queueNoticeTimerRef.current != null) {
+      window.clearTimeout(queueNoticeTimerRef.current)
+    }
+    queueNoticeTimerRef.current = window.setTimeout(() => {
+      setQueueNotice(null)
+      queueNoticeTimerRef.current = null
+    }, 2200)
+  }, [])
+
+  const revealQueueRail = useCallback(() => {
+    setQueueOpen(true)
+    setQueueRevealTick((n) => n + 1)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (queueNoticeTimerRef.current != null) {
+        window.clearTimeout(queueNoticeTimerRef.current)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     currentTrackIdRef.current = currentTrack?.id ?? null
@@ -220,7 +272,10 @@ export function PlaybackProvider({ children }: { children: ReactNode }): React.J
 
   const persistPrefs = useCallback((next: Partial<Prefs>) => {
     prefs.current = { ...prefs.current, ...next }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs.current))
+    // Defer disk write so mute/volume UI can paint before localStorage blocks the main thread.
+    window.setTimeout(() => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs.current))
+    }, 0)
   }, [])
 
   const creditPlay = useCallback((trackId: string | null | undefined): void => {
@@ -256,7 +311,11 @@ export function PlaybackProvider({ children }: { children: ReactNode }): React.J
     audio.volume = 1
     audioRef.current = audio
 
-    const onTime = (): void => setCurrentTime(audio.currentTime)
+    const onTime = (): void => {
+      const t = audio.currentTime
+      currentTimeRef.current = t
+      setPlaybackClock(t)
+    }
     const onMeta = (): void => setDuration(Number.isFinite(audio.duration) ? audio.duration : 0)
     const onPlay = (): void => {
       setIsPlaying(true)
@@ -386,8 +445,7 @@ export function PlaybackProvider({ children }: { children: ReactNode }): React.J
 
   /**
    * Smooth seek UI while playing (Spotify-style).
-   * `timeupdate` alone is too sparse for local files — rAF keeps the bar in sync.
-   * Throttle state writes (~20fps) so the whole player tree is not redrawn 60×/sec.
+   * Publishes to the external playback clock only — does not touch PlaybackContext.
    */
   useEffect(() => {
     if (!isPlaying) return
@@ -399,7 +457,8 @@ export function PlaybackProvider({ children }: { children: ReactNode }): React.J
         const t = audio.currentTime
         if (Math.abs(t - lastPosted) >= 0.05) {
           lastPosted = t
-          setCurrentTime(t)
+          currentTimeRef.current = t
+          setPlaybackClock(t)
         }
       }
       frame = window.requestAnimationFrame(tick)
@@ -445,8 +504,7 @@ export function PlaybackProvider({ children }: { children: ReactNode }): React.J
       const landed = audio.currentTime
       // Some codecs ignore seek until more data is buffered.
       if (landed < startAt - 1 && audio.readyState < 2) return false
-      setCurrentTime(landed > 0.05 ? landed : startAt)
-      currentTimeRef.current = landed > 0.05 ? landed : startAt
+      publishClock(landed > 0.05 ? landed : startAt, true)
       return true
     }
 
@@ -460,7 +518,7 @@ export function PlaybackProvider({ children }: { children: ReactNode }): React.J
     }
     audio.addEventListener('loadedmetadata', onReady)
     audio.addEventListener('canplay', onReady)
-  }, [])
+  }, [publishClock])
 
   const loadAndPlay = useCallback(
     async (track: TrackRow, autoplay: boolean, startAtSeconds?: number) => {
@@ -472,8 +530,7 @@ export function PlaybackProvider({ children }: { children: ReactNode }): React.J
       setError(null)
       const startAt =
         typeof startAtSeconds === 'number' && startAtSeconds > 0 ? startAtSeconds : 0
-      setCurrentTime(startAt)
-      currentTimeRef.current = startAt
+      publishClock(startAt, true)
       setDuration(track.durationMs != null ? track.durationMs / 1000 : 0)
       audio.src = mediaUrl(track.id)
       audio.load()
@@ -494,7 +551,7 @@ export function PlaybackProvider({ children }: { children: ReactNode }): React.J
         setIsPlaying(false)
       }
     },
-    [maybeCreditOutgoing, seekWhenReady, ensureAudioAnalyser]
+    [maybeCreditOutgoing, seekWhenReady, ensureAudioAnalyser, publishClock]
   )
 
   /** Restore queue + seek position once; land paused (autoplay is flaky in Electron). */
@@ -606,6 +663,7 @@ export function PlaybackProvider({ children }: { children: ReactNode }): React.J
       const nextQueue = buildQueue(track, source, useShuffle)
       setQueue(nextQueue)
       setQueueIndex(0)
+      setUserQueueCount(0)
       void loadAndPlay(nextQueue[0], true)
     },
     [loadAndPlay, persistPrefs, shuffle]
@@ -614,10 +672,16 @@ export function PlaybackProvider({ children }: { children: ReactNode }): React.J
   const jumpToQueueIndex = useCallback(
     (index: number) => {
       if (index < 0 || index >= queue.length) return
+      const idx = queueIndex
+      const userCount = userQueueCount
+      if (index > idx && userCount > 0) {
+        const consumed = Math.min(userCount, index - idx)
+        setUserQueueCount(userCount - consumed)
+      }
       setQueueIndex(index)
       void loadAndPlay(queue[index], true)
     },
-    [loadAndPlay, queue]
+    [loadAndPlay, queue, queueIndex, userQueueCount]
   )
 
   const next = useCallback(() => {
@@ -626,6 +690,7 @@ export function PlaybackProvider({ children }: { children: ReactNode }): React.J
       const audio = audioRef.current
       if (audio) {
         audio.currentTime = 0
+        publishClock(0, true)
         void audio.play()
       }
       return
@@ -634,6 +699,7 @@ export function PlaybackProvider({ children }: { children: ReactNode }): React.J
     if (atEnd) {
       if (repeat === 'all') {
         setQueueIndex(0)
+        setUserQueueCount(0)
         void loadAndPlay(queue[0], true)
       } else {
         audioRef.current?.pause()
@@ -642,21 +708,25 @@ export function PlaybackProvider({ children }: { children: ReactNode }): React.J
       return
     }
     const nextIndex = queueIndex + 1
+    if (userQueueCount > 0) {
+      setUserQueueCount((count) => Math.max(0, count - 1))
+    }
     setQueueIndex(nextIndex)
     void loadAndPlay(queue[nextIndex], true)
-  }, [loadAndPlay, queue, queueIndex, repeat])
+  }, [loadAndPlay, queue, queueIndex, repeat, userQueueCount, publishClock])
 
   const previous = useCallback(() => {
     const audio = audioRef.current
     if (!audio || queue.length === 0) return
     if (audio.currentTime > 3 || queueIndex === 0) {
       audio.currentTime = 0
+      publishClock(0, true)
       return
     }
     const prevIndex = queueIndex - 1
     setQueueIndex(prevIndex)
     void loadAndPlay(queue[prevIndex], true)
-  }, [loadAndPlay, queue, queueIndex])
+  }, [loadAndPlay, queue, queueIndex, publishClock])
 
   useEffect(() => {
     const audio = audioRef.current
@@ -710,8 +780,8 @@ export function PlaybackProvider({ children }: { children: ReactNode }): React.J
     } catch {
       // Ignore InvalidStateError while the element is still loading.
     }
-    setCurrentTime(audio.currentTime || next)
-  }, [])
+    publishClock(audio.currentTime || next, true)
+  }, [publishClock])
 
   /** `uiLevel` is the slider position 0..1; curve maps it to quieter-end-friendly gain. */
   const applyOutputGain = useCallback((uiLevel: number): void => {
@@ -769,11 +839,14 @@ export function PlaybackProvider({ children }: { children: ReactNode }): React.J
     const current = q[idx]
     if (!current || q.length <= 1) return
 
+    const userCount = userQueueCountRef.current
     if (nextShuffle) {
-      // Keep the song that is playing; randomize everything else after it.
-      const rest = q.filter((_, i) => i !== idx)
-      setQueue([current, ...shuffleList(rest)])
+      // Keep now-playing + manual queue; shuffle only automatic next-up.
+      const userBlock = q.slice(idx + 1, idx + 1 + userCount)
+      const nextUp = q.slice(idx + 1 + userCount)
+      setQueue([current, ...userBlock, ...shuffleList(nextUp)])
       setQueueIndex(0)
+      setUserQueueCount(userBlock.length)
       return
     }
 
@@ -782,8 +855,10 @@ export function PlaybackProvider({ children }: { children: ReactNode }): React.J
     if (source.length === 0) return
     const pos = source.findIndex((item) => item.id === current.id)
     if (pos < 0) return
-    setQueue([...source])
+    const userBlock = q.slice(idx + 1, idx + 1 + userCount)
+    setQueue([...source.slice(0, pos + 1), ...userBlock, ...source.slice(pos + 1)])
     setQueueIndex(pos)
+    setUserQueueCount(userBlock.length)
   }, [persistPrefs, shuffle])
 
   const cycleRepeat = useCallback(() => {
@@ -800,70 +875,112 @@ export function PlaybackProvider({ children }: { children: ReactNode }): React.J
         if (prev.length === 0) {
           void loadAndPlay(track, true)
           setQueueIndex(0)
+          setUserQueueCount(0)
           return [track]
         }
-        const insertAt = queueIndex + 1
-        const nextQueue = [...prev.slice(0, insertAt), track, ...prev.slice(insertAt)]
-        return nextQueue
+        const insertAt = queueIndexRef.current + 1
+        return [...prev.slice(0, insertAt), track, ...prev.slice(insertAt)]
       })
+      if (queueRef.current.length > 0) {
+        setUserQueueCount((count) => count + 1)
+        flashQueueNotice('Added to queue')
+        revealQueueRail()
+      }
     },
-    [loadAndPlay, queueIndex]
+    [flashQueueNotice, loadAndPlay, revealQueueRail]
   )
 
   const addToQueue = useCallback(
-    (track: TrackRow) => {
+    (track: TrackRow, atIndex?: number) => {
       setQueue((prev) => {
         if (prev.length === 0) {
           void loadAndPlay(track, false)
           setQueueIndex(0)
+          setUserQueueCount(0)
           return [track]
         }
-        return [...prev, track]
+        const userStart = queueIndexRef.current + 1
+        const userEnd = queueIndexRef.current + userQueueCountRef.current + 1
+        const insertAt = Math.max(
+          userStart,
+          Math.min(atIndex ?? userEnd, userEnd)
+        )
+        return [...prev.slice(0, insertAt), track, ...prev.slice(insertAt)]
       })
+      if (queueRef.current.length > 0) {
+        setUserQueueCount((count) => count + 1)
+      }
+      flashQueueNotice('Added to queue')
+      revealQueueRail()
     },
-    [loadAndPlay]
+    [flashQueueNotice, loadAndPlay, revealQueueRail]
   )
 
   const addTracksToQueue = useCallback(
     (tracks: TrackRow[]) => {
       if (tracks.length === 0) return
+      const hadQueue = queueRef.current.length > 0
       setQueue((prev) => {
         if (prev.length === 0) {
           void loadAndPlay(tracks[0], false)
           setQueueIndex(0)
+          // First starts playback; the rest sit in "Added to queue".
+          setUserQueueCount(Math.max(0, tracks.length - 1))
           return [...tracks]
         }
-        return [...prev, ...tracks]
+        const insertAt = queueIndexRef.current + userQueueCountRef.current + 1
+        return [...prev.slice(0, insertAt), ...tracks, ...prev.slice(insertAt)]
       })
+      if (hadQueue) {
+        setUserQueueCount((count) => count + tracks.length)
+      }
+      flashQueueNotice(
+        tracks.length === 1 ? 'Added to queue' : `Added ${tracks.length} to queue`
+      )
+      revealQueueRail()
     },
-    [loadAndPlay]
+    [flashQueueNotice, loadAndPlay, revealQueueRail]
   )
 
   const removeFromQueue = useCallback(
     (index: number) => {
       setQueue((prev) => {
         if (index < 0 || index >= prev.length) return prev
+        const idx = queueIndexRef.current
+        const userCount = userQueueCountRef.current
+        const userStart = idx + 1
+        const userEnd = idx + userCount
+        if (index >= userStart && index <= userEnd) {
+          setUserQueueCount(Math.max(0, userCount - 1))
+        }
+
         const nextQueue = prev.filter((_, i) => i !== index)
         if (nextQueue.length === 0) {
           audioRef.current?.pause()
           audioRef.current?.removeAttribute('src')
           setQueueIndex(0)
+          setUserQueueCount(0)
           setIsPlaying(false)
-          setCurrentTime(0)
+          resetPlaybackClock()
+          currentTimeRef.current = 0
           setDuration(0)
           return []
         }
-        if (index < queueIndex) {
-          setQueueIndex((i) => Math.max(0, i - 1))
-        } else if (index === queueIndex) {
+        if (index < idx) {
+          setQueueIndex(Math.max(0, idx - 1))
+        } else if (index === idx) {
           const newIndex = Math.min(index, nextQueue.length - 1)
           setQueueIndex(newIndex)
+          // Removing now-playing consumes into the next slot; if that was user-queued, drop one.
+          if (userCount > 0 && newIndex === index) {
+            setUserQueueCount(Math.max(0, userCount - 1))
+          }
           void loadAndPlay(nextQueue[newIndex], isPlaying)
         }
         return nextQueue
       })
     },
-    [isPlaying, loadAndPlay, queueIndex]
+    [isPlaying, loadAndPlay]
   )
 
   const clearQueue = useCallback(() => {
@@ -871,11 +988,29 @@ export function PlaybackProvider({ children }: { children: ReactNode }): React.J
     audioRef.current?.removeAttribute('src')
     setQueue([])
     setQueueIndex(0)
+    setUserQueueCount(0)
     sourceOrderRef.current = []
     setIsPlaying(false)
-    setCurrentTime(0)
+    resetPlaybackClock()
+    currentTimeRef.current = 0
     setDuration(0)
     setError(null)
+  }, [])
+
+  const syncTrackRow = useCallback((track: TrackRow) => {
+    setQueue((prev) => {
+      let changed = false
+      const next = prev.map((item) => {
+        if (item.id !== track.id) return item
+        changed = true
+        return track
+      })
+      return changed ? next : prev
+    })
+    sourceOrderRef.current = sourceOrderRef.current.map((item) =>
+      item.id === track.id ? track : item
+    )
+    setFocusedTrack((prev) => (prev?.id === track.id ? track : prev))
   }, [])
 
   // Discord Rich Presence — update on track / play-state changes only (not every tick).
@@ -1058,24 +1193,22 @@ export function PlaybackProvider({ children }: { children: ReactNode }): React.J
       focusTrack,
       queue,
       queueIndex,
+      userQueueCount,
       isPlaying,
-      currentTime,
       duration,
-      volume,
-      muted,
       shuffle,
       repeat,
       error,
       queueOpen,
       setQueueOpen,
+      queueRevealTick,
+      queueNotice,
       playTrack,
       togglePlay,
       pause,
       next,
       previous,
       seek,
-      setVolume,
-      toggleMute,
       toggleShuffle,
       cycleRepeat,
       playNext,
@@ -1084,6 +1217,7 @@ export function PlaybackProvider({ children }: { children: ReactNode }): React.J
       removeFromQueue,
       clearQueue,
       jumpToQueueIndex,
+      syncTrackRow,
       visualizerOpen,
       setVisualizerOpen,
       ensureAudioAnalyser,
@@ -1096,23 +1230,21 @@ export function PlaybackProvider({ children }: { children: ReactNode }): React.J
       focusTrack,
       queue,
       queueIndex,
+      userQueueCount,
       isPlaying,
-      currentTime,
       duration,
-      volume,
-      muted,
       shuffle,
       repeat,
       error,
       queueOpen,
+      queueRevealTick,
+      queueNotice,
       playTrack,
       togglePlay,
       pause,
       next,
       previous,
       seek,
-      setVolume,
-      toggleMute,
       toggleShuffle,
       cycleRepeat,
       playNext,
@@ -1121,6 +1253,7 @@ export function PlaybackProvider({ children }: { children: ReactNode }): React.J
       removeFromQueue,
       clearQueue,
       jumpToQueueIndex,
+      syncTrackRow,
       visualizerOpen,
       ensureAudioAnalyser,
       getAnalyserFrame,
@@ -1128,13 +1261,35 @@ export function PlaybackProvider({ children }: { children: ReactNode }): React.J
     ]
   )
 
-  return <PlaybackContext.Provider value={value}>{children}</PlaybackContext.Provider>
+  const volumeValue = useMemo<PlaybackVolumeContextValue>(
+    () => ({
+      volume,
+      muted,
+      setVolume,
+      toggleMute
+    }),
+    [volume, muted, setVolume, toggleMute]
+  )
+
+  return (
+    <PlaybackContext.Provider value={value}>
+      <PlaybackVolumeContext.Provider value={volumeValue}>{children}</PlaybackVolumeContext.Provider>
+    </PlaybackContext.Provider>
+  )
 }
 
 export function usePlayback(): PlaybackContextValue {
   const ctx = useContext(PlaybackContext)
   if (!ctx) {
     throw new Error('usePlayback must be used within PlaybackProvider')
+  }
+  return ctx
+}
+
+export function usePlaybackVolume(): PlaybackVolumeContextValue {
+  const ctx = useContext(PlaybackVolumeContext)
+  if (!ctx) {
+    throw new Error('usePlaybackVolume must be used within PlaybackProvider')
   }
   return ctx
 }
